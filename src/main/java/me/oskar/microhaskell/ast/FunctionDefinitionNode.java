@@ -35,8 +35,8 @@ public class FunctionDefinitionNode extends Node {
         return appliedRecursively;
     }
 
-    public void setAppliedRecursively() {
-        appliedRecursively = true;
+    public void setAppliedRecursively(boolean recursive) {
+        appliedRecursively = recursive;
     }
 
     @Override

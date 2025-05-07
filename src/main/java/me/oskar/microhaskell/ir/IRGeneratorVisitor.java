@@ -8,8 +8,7 @@ import java.util.*;
 
 public class IRGeneratorVisitor implements Visitor<Expression> {
 
-    private final Map<String, FunctionDefinitionNode> functions = new LinkedHashMap<>();
-    private String currentFunction = null;
+    private String currentFunctionName = null;
     private String recursiveAlias = null;
 
     private final Expression yCombinator = new Lambda("f",
@@ -39,15 +38,16 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
     @Override
     public Expression visit(FunctionDefinitionNode functionDefinitionNode) {
-        var previousFunction = currentFunction;
+        var previousFunctionName = currentFunctionName;
         var previousAlias = recursiveAlias;
 
-        currentFunction = functionDefinitionNode.getName();
-        recursiveAlias = functionDefinitionNode.isAppliedRecursively() ? "__rec" : currentFunction;
+        currentFunctionName = functionDefinitionNode.getName();
+        recursiveAlias = functionDefinitionNode.isAppliedRecursively()
+                ? "__rec_%s".formatted(currentFunctionName)
+                : null;
 
-        Expression body = functionDefinitionNode.getBody().accept(this);
+        var body = functionDefinitionNode.getBody().accept(this);
 
-        // Wrap parameters
         for (int i = functionDefinitionNode.getParameters().size() - 1; i >= 0; i--) {
             var param = (IdentifierNode) functionDefinitionNode.getParameters().get(i);
             body = new Lambda(param.getName(), body);
@@ -59,8 +59,9 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
             body = new Application(yCombinator, body);
         }
 
-        currentFunction = previousFunction;
+        currentFunctionName = previousFunctionName;
         recursiveAlias = previousAlias;
+
         return body;
     }
 
@@ -68,9 +69,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
     public Expression visit(IdentifierNode identifierNode) {
         var name = identifierNode.getName();
 
-        if (name.equals(currentFunction) &&
-                recursiveAlias != null &&
-                !name.equals(recursiveAlias)) {
+        if (name.equals(currentFunctionName) && recursiveAlias != null) {
             return new Variable(recursiveAlias);
         }
 
@@ -79,16 +78,10 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
     @Override
     public Expression visit(IfNode ifNode) {
-        return new Application(
-                new Application(
-                        new Application(
-                                new Variable("if"),
-                                ifNode.getCondition().accept(this)
-                        ),
-                        ifNode.getConsequence().accept(this)
-                ),
-                ifNode.getAlternative().accept(this)
-        );
+        return new Application(new Application(new Application(new Variable("if"),
+                ifNode.getCondition().accept(this)),
+                ifNode.getConsequence().accept(this)),
+                ifNode.getAlternative().accept(this));
     }
 
     @Override
@@ -98,27 +91,17 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
     @Override
     public Expression visit(ProgramNode programNode) {
-        for (var d : programNode.getDefinitions()) {
-            functions.put(d.getName(), d);
-        }
-
-        Map<String, Expression> functionIRs = new LinkedHashMap<>();
+        var functionIRs = new LinkedHashMap<String, Expression>();
         for (var d : programNode.getDefinitions()) {
             functionIRs.put(d.getName(), d.accept(this));
         }
 
         Expression body = new Variable("main");
-
-        List<String> names = new ArrayList<>(functionIRs.keySet());
-        Collections.reverse(names);
-
-        for (String name : names) {
-            Expression expr = functionIRs.get(name);
+        for (String name : functionIRs.keySet().stream().toList().reversed()) {
+            var expr = functionIRs.get(name);
             body = new Application(new Lambda(name, body), expr);
         }
 
         return body;
     }
-
-
 }
