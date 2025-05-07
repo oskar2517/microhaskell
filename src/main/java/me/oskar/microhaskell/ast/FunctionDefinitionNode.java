@@ -11,7 +11,7 @@ public class FunctionDefinitionNode extends Node {
     private final ExpressionNode body;
 
     @Node.NoProperty
-    private boolean appliedRecursively = true;
+    private boolean appliedRecursively = false;
 
     public FunctionDefinitionNode(String name, List<AtomicExpressionNode> parameters, ExpressionNode body) {
         this.name = name;
@@ -35,8 +35,8 @@ public class FunctionDefinitionNode extends Node {
         return appliedRecursively;
     }
 
-    public void setAppliedRecursively() {
-        appliedRecursively = true;
+    public void setAppliedRecursively(boolean recursive) {
+        appliedRecursively = recursive;
     }
 
     @Override

@@ -4,53 +4,83 @@ import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.ast.visitor.Visitor;
 import me.oskar.microhaskell.evaluation.expression.*;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class IRGeneratorVisitor implements Visitor<Expression> {
 
-    private final Map<String, FunctionDefinitionNode> functions = new HashMap<>();
+    private String currentFunctionName = null;
+    private String recursiveAlias = null;
+
+    private final Expression yCombinator = new Lambda("f",
+            new Application(
+                    new Lambda("x",
+                            new Application(
+                                    new Variable("f"),
+                                    new Application(new Variable("x"), new Variable("x"))
+                            )
+                    ),
+                    new Lambda("x",
+                            new Application(
+                                    new Variable("f"),
+                                    new Application(new Variable("x"), new Variable("x"))
+                            )
+                    )
+            )
+    );
 
     @Override
     public Expression visit(FunctionApplicationNode functionApplicationNode) {
-        return new Application(functionApplicationNode.getFunction().accept(this),
-                functionApplicationNode.getArgument().accept(this));
+        return new Application(
+                functionApplicationNode.getFunction().accept(this),
+                functionApplicationNode.getArgument().accept(this)
+        );
     }
-
 
     @Override
     public Expression visit(FunctionDefinitionNode functionDefinitionNode) {
-        var parameters = functionDefinitionNode.getParameters();
+        var previousFunctionName = currentFunctionName;
+        var previousAlias = recursiveAlias;
 
-        if (parameters.isEmpty()) {
-            return functionDefinitionNode.getBody().accept(this);
+        currentFunctionName = functionDefinitionNode.getName();
+        recursiveAlias = functionDefinitionNode.isAppliedRecursively()
+                ? "__rec_%s".formatted(currentFunctionName)
+                : null;
+
+        var body = functionDefinitionNode.getBody().accept(this);
+
+        for (int i = functionDefinitionNode.getParameters().size() - 1; i >= 0; i--) {
+            var param = (IdentifierNode) functionDefinitionNode.getParameters().get(i);
+            body = new Lambda(param.getName(), body);
         }
 
-        var lambda = new Lambda(((IdentifierNode) parameters.getLast()).getName(),
-                functionDefinitionNode.getBody().accept(this));
-        for (var i = parameters.size() - 2; i >= 0; i--) {
-            var p = (IdentifierNode) parameters.get(i);
-            lambda = new Lambda(p.getName(), lambda);
+        // Wrap in Y combinator if recursive
+        if (functionDefinitionNode.isAppliedRecursively()) {
+            body = new Lambda(recursiveAlias, body);
+            body = new Application(yCombinator, body);
         }
 
-        return lambda;
+        currentFunctionName = previousFunctionName;
+        recursiveAlias = previousAlias;
+
+        return body;
     }
 
     @Override
     public Expression visit(IdentifierNode identifierNode) {
-        if (!functions.containsKey(identifierNode.getName())) {
-            return new Variable(identifierNode.getName());
+        var name = identifierNode.getName();
+
+        if (name.equals(currentFunctionName) && recursiveAlias != null) {
+            return new Variable(recursiveAlias);
         }
 
-        var function = functions.get(identifierNode.getName());
-
-        return function.accept(this);
+        return new Variable(name);
     }
 
     @Override
     public Expression visit(IfNode ifNode) {
-        return new If(ifNode.getCondition().accept(this),
-                ifNode.getConsequence().accept(this),
+        return new Application(new Application(new Application(new Variable("if"),
+                ifNode.getCondition().accept(this)),
+                ifNode.getConsequence().accept(this)),
                 ifNode.getAlternative().accept(this));
     }
 
@@ -61,20 +91,17 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
     @Override
     public Expression visit(ProgramNode programNode) {
+        var functionIRs = new LinkedHashMap<String, Expression>();
         for (var d : programNode.getDefinitions()) {
-            functions.put(d.getName(), d);
+            functionIRs.put(d.getName(), d.accept(this));
         }
 
-        var main = functions.get("main");
-
-        if (main == null) {
-            throw new RuntimeException("Main function definition not found");
+        Expression body = new Variable("main");
+        for (String name : functionIRs.keySet().stream().toList().reversed()) {
+            var expr = functionIRs.get(name);
+            body = new Application(new Lambda(name, body), expr);
         }
 
-        if (!main.getParameters().isEmpty()) {
-            throw new RuntimeException("Main function does not have parameters");
-        }
-
-        return main.getBody().accept(this);
+        return body;
     }
 }

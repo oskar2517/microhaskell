@@ -10,7 +10,7 @@ public record Variable(String name) implements Expression {
         if (value == null) {
             throw new RuntimeException("Unbound variable: %s".formatted(name));
         }
-        return value;
+        return value.evaluate(env);
     }
 
     @Override
