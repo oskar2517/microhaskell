@@ -95,3 +95,4 @@ Potential future enhancements to Micro Haskell include:
 - Pattern matching
 - User-defined algebraic data types
 - REPL interface
+- Improved error handling
