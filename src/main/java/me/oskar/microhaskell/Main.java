@@ -33,15 +33,10 @@ public class Main {
         var recursionAnalyzer = new RecursionAnalyzerVisitor();
         ast.accept(recursionAnalyzer);
 
-        for (var d : ast.getDefinitions()) {
-            System.out.println(d.getName() + " " + d.isAppliedRecursively());
-        }
-
         var irGenerator  = new IRGeneratorVisitor();
         var ir = ast.accept(irGenerator);
 
         System.out.println(ir);
-
         System.out.println(ir.evaluate(Builtins.initialEnv()));
     }
 }
