@@ -4,6 +4,7 @@ Micro Haskell is an interpreter for a small subset of the Haskell programming la
 
 ## Features
 
+- Lazy evaluation
 - Dynamic typing
 - Function definitions
 - Function applications
@@ -91,7 +92,6 @@ main = (apply (+) (curriedGcd 317523) (fibonacci 10)) * factorial 4 - constant;
 
 Potential future enhancements to Micro Haskell include:
 
-- Lazy evaluation support
 - Pattern matching
 - User-defined algebraic data types
 - REPL interface
