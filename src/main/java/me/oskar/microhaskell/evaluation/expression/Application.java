@@ -1,7 +1,5 @@
 package me.oskar.microhaskell.evaluation.expression;
 
-
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,14 +9,14 @@ public record Application(Expression function, Expression argument) implements E
     @Override
     public Expression evaluate(Map<String, Expression> env) {
         var evaluatedFunction = function.evaluate(env);
-        var evaluatedArgument = argument.evaluate(env);
+        var lazyArgument = new Thunk(argument, env);
 
         if (evaluatedFunction instanceof Closure(Lambda lambda, Map<String, Expression> enclosedEnv)) {
             var extendedEnv = new HashMap<>(enclosedEnv);
-            extendedEnv.put(lambda.parameter(), evaluatedArgument);
+            extendedEnv.put(lambda.parameter(), lazyArgument);
             return lambda.body().evaluate(extendedEnv);
         } else if (evaluatedFunction instanceof BuiltinFunction bf) {
-            return bf.apply(List.of(evaluatedArgument));
+            return bf.apply(List.of(lazyArgument), env);
         } else {
             throw new RuntimeException("Not a function: %s".formatted(evaluatedFunction));
         }

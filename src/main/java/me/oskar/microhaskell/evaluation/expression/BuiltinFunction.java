@@ -1,8 +1,6 @@
 package me.oskar.microhaskell.evaluation.expression;
 
 
-import com.sun.jdi.Value;
-
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -24,7 +22,7 @@ public abstract class BuiltinFunction implements Expression {
 
     abstract IntLiteral applyFully(List<IntLiteral> args);
 
-    public Expression apply(List<Expression> newArgs) {
+    public Expression apply(List<Expression> newArgs, Map<String, Expression> env) {
         var combinedArguments = new java.util.ArrayList<>(partialArguments);
         combinedArguments.addAll(newArgs);
 
@@ -32,7 +30,8 @@ public abstract class BuiltinFunction implements Expression {
             return new CurriedBuiltinFunction(arity, combinedArguments, this::applyFully);
         } else if (combinedArguments.size() == arity) {
             var integerArguments = combinedArguments.stream()
-                    .map(v -> {
+                    .map(a -> {
+                        var v = a.evaluate(env);
                         if (v instanceof IntLiteral i) {
                             return i;
                         }
