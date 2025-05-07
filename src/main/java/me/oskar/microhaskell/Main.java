@@ -30,55 +30,9 @@ public class Main {
         var ast = new Parser(lexer).parse();
 
         var irGenerator  = new IRGeneratorVisitor();
-
-        var fibonacciExpr = new LetRec(
-                "fibonacci",
-                new Lambda("n",
-                        new If(
-                                new Application(
-                                        new Application(new Variable("=="), new Variable("n")),
-                                        new IntLiteral(0)
-                                ),
-                                new IntLiteral(0),
-                                new If(
-                                        new Application(
-                                                new Application(new Variable("=="), new Variable("n")),
-                                                new IntLiteral(1)
-                                        ),
-                                        new IntLiteral(1),
-                                        new Application(
-                                                new Application(new Variable("+"),
-                                                        new Application(
-                                                                new Variable("fibonacci"),
-                                                                new Application(
-                                                                        new Application(new Variable("-"), new Variable("n")),
-                                                                        new IntLiteral(1)
-                                                                )
-                                                        )
-                                                ),
-                                                new Application(
-                                                        new Variable("fibonacci"),
-                                                        new Application(
-                                                                new Application(new Variable("-"), new Variable("n")),
-                                                                new IntLiteral(2)
-                                                        )
-                                                )
-                                        )
-                                )
-                        )
-                ),
-                new Application(new Variable("fibonacci"), new IntLiteral(10))
-        );
-
         var ir = ast.accept(irGenerator);
-
 
         System.out.println(ir);
         System.out.println(ir.evaluate(Builtins.initialEnv()));
-
-        /*var ir = ast.accept(irGenerator);
-
-        System.out.println(ir);
-        System.out.println(ir.evaluate(Builtins.initialEnv())); */
     }
 }
