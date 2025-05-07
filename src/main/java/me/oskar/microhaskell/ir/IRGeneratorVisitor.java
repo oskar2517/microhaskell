@@ -49,8 +49,9 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
     @Override
     public Expression visit(IfNode ifNode) {
-        return new If(ifNode.getCondition().accept(this),
-                ifNode.getConsequence().accept(this),
+        return new Application(new Application(new Application(new Variable("if"),
+                ifNode.getCondition().accept(this)),
+                ifNode.getConsequence().accept(this)),
                 ifNode.getAlternative().accept(this));
     }
 

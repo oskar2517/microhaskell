@@ -20,7 +20,7 @@ public abstract class BuiltinFunction implements Expression {
         return "<builtin function>";
     }
 
-    abstract IntLiteral applyFully(List<IntLiteral> args);
+    abstract Expression applyFully(List<Expression> args);
 
     public Expression apply(List<Expression> newArgs, Map<String, Expression> env) {
         var combinedArguments = new java.util.ArrayList<>(partialArguments);
@@ -29,35 +29,26 @@ public abstract class BuiltinFunction implements Expression {
         if (combinedArguments.size() < arity) {
             return new CurriedBuiltinFunction(arity, combinedArguments, this::applyFully);
         } else if (combinedArguments.size() == arity) {
-            var integerArguments = combinedArguments.stream()
-                    .map(a -> {
-                        var v = a.evaluate(env);
-                        if (v instanceof IntLiteral i) {
-                            return i;
-                        }
-                        throw new RuntimeException("Expected integer but got: %s".formatted(v));
-                    })
-                    .toList();
-            return applyFully(integerArguments);
+            return applyFully(combinedArguments);
         } else {
             throw new RuntimeException("Too many arguments to builtin function");
         }
     }
 
-    public static BuiltinFunction of(int arity, Function<List<IntLiteral>, IntLiteral> op) {
+    public static BuiltinFunction of(int arity, Function<List<Expression>, Expression> op) {
         return new CurriedBuiltinFunction(arity, List.of(), op);
     }
 
     private static class CurriedBuiltinFunction extends BuiltinFunction {
-        private final Function<List<IntLiteral>, IntLiteral> operation;
+        private final Function<List<Expression>, Expression> operation;
 
-        public CurriedBuiltinFunction(int arity, List<Expression> argsSoFar, Function<List<IntLiteral>, IntLiteral> op) {
+        public CurriedBuiltinFunction(int arity, List<Expression> argsSoFar, Function<List<Expression>, Expression> op) {
             super(arity, argsSoFar);
             this.operation = op;
         }
 
         @Override
-        IntLiteral applyFully(List<IntLiteral> args) {
+        Expression applyFully(List<Expression> args) {
             return operation.apply(args);
         }
 
