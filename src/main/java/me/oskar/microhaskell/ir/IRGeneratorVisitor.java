@@ -11,7 +11,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
     private String currentFunctionName = null;
     private String recursiveAlias = null;
 
-    private final Expression yCombinator = new Lambda("f",
+    private static final Expression Y_COMBINATOR = new Lambda("f",
             new Application(
                     new Lambda("x",
                             new Application(
@@ -56,7 +56,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
         // Wrap in Y combinator if recursive
         if (functionDefinitionNode.isAppliedRecursively()) {
             body = new Lambda(recursiveAlias, body);
-            body = new Application(yCombinator, body);
+            body = new Application(Y_COMBINATOR, body);
         }
 
         currentFunctionName = previousFunctionName;
