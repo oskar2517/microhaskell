@@ -8,7 +8,6 @@ public class Keyword {
             Map.entry("if", TokenType.IF),
             Map.entry("then", TokenType.THEN),
             Map.entry("else", TokenType.ELSE),
-            Map.entry("while", TokenType.THEN)
     );
 
     public static boolean isKeyword(final String literal) {
