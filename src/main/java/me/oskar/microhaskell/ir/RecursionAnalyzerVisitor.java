@@ -47,8 +47,19 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
     }
 
     @Override
+    public Void visit(LetNode letNode) {
+        letNode.getExpression().accept(this);
+
+        for (var b : letNode.getBindings()) {
+            b.accept(this);
+        }
+
+        return null;
+    }
+
+    @Override
     public Void visit(ProgramNode programNode) {
-        for (var d : programNode.getDefinitions()) {
+        for (var d : programNode.getBindings()) {
             d.accept(this);
         }
 

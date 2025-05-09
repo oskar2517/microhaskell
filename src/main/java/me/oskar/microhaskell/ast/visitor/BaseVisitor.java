@@ -30,6 +30,11 @@ public class BaseVisitor<T> implements Visitor<T> {
     }
 
     @Override
+    public T visit(LetNode letNode) {
+        return null;
+    }
+
+    @Override
     public T visit(ProgramNode programNode) {
         return null;
     }

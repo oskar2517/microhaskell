@@ -7,7 +7,9 @@ public class Keyword {
     static final Map<String, TokenType> keywords = Map.ofEntries(
             Map.entry("if", TokenType.IF),
             Map.entry("then", TokenType.THEN),
-            Map.entry("else", TokenType.ELSE)
+            Map.entry("else", TokenType.ELSE),
+            Map.entry("let", TokenType.LET),
+            Map.entry("in", TokenType.IN)
     );
 
     public static boolean isKeyword(final String literal) {

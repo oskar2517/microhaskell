@@ -90,9 +90,22 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
     }
 
     @Override
+    public Expression visit(LetNode letNode) {
+        var bindings = letNode.getBindings();
+
+        var body = letNode.getExpression().accept(this);
+
+        for (var binding : bindings.reversed()) {
+            body = new Application(new Lambda(binding.getName(), body), binding.accept(this));
+        }
+
+        return body;
+    }
+
+    @Override
     public Expression visit(ProgramNode programNode) {
         var functionIRs = new LinkedHashMap<String, Expression>();
-        for (var d : programNode.getDefinitions()) {
+        for (var d : programNode.getBindings()) {
             functionIRs.put(d.getName(), d.accept(this));
         }
 

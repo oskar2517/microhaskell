@@ -32,14 +32,25 @@ public class Parser {
         throw new RuntimeException("Unexpected token: %s".formatted(currentToken));
     }
 
-    public ProgramNode parse() {
-        var definitions = new ArrayList<FunctionDefinitionNode>();
+    private boolean matchToken(TokenType type) {
+        if (currentToken.type() == type) {
+            eatToken(type);
 
-        while (currentToken.type() != TokenType.EOF) {
-            definitions.add(parseFunctionDefinition());
+            return true;
         }
 
-        return new ProgramNode(definitions);
+        return false;
+    }
+
+    public ProgramNode parse() {
+        var bindings = new ArrayList<FunctionDefinitionNode>();
+
+        while (currentToken.type() != TokenType.EOF) {
+            bindings.add(parseFunctionDefinition());
+            eatToken(TokenType.SEMICOLON);
+        }
+
+        return new ProgramNode(bindings);
     }
 
     private FunctionDefinitionNode parseFunctionDefinition() {
@@ -54,13 +65,31 @@ public class Parser {
 
         var expression = parseExpression();
 
-        eatToken(TokenType.SEMICOLON);
-
         return new FunctionDefinitionNode(name, parameters, expression);
     }
 
     private ExpressionNode parseExpression() {
-        return parseComparison();
+        return parseLet();
+    }
+
+    private ExpressionNode parseLet() {
+        if (currentToken.type() != TokenType.LET) {
+            return parseComparison();
+        }
+
+        eatToken(TokenType.LET);
+
+        var bindings = new ArrayList<FunctionDefinitionNode>();
+
+        do {
+            bindings.add(parseFunctionDefinition());
+        } while (matchToken(TokenType.SEMICOLON));
+
+        eatToken(TokenType.IN);
+
+        var expression = parseExpression();
+
+        return new LetNode(bindings, expression);
     }
 
     private ExpressionNode parseComparison() {

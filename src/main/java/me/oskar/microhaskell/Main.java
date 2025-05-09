@@ -38,5 +38,7 @@ public class Main {
 
         System.out.println(ir);
         System.out.println(ir.evaluate(Builtins.initialEnv()));
+
+        System.out.println(ast.toString());
     }
 }

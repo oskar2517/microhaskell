@@ -8,6 +8,8 @@ public enum TokenType {
     IF("if"),
     THEN("then"),
     ELSE("else"),
+    LET("let"),
+    IN("in"),
 
     L_PAREN("("),
     R_PAREN(")"),

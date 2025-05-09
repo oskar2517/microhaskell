@@ -11,6 +11,7 @@ Micro Haskell is an interpreter for a small subset of the Haskell programming la
 - Currying
 - Recursive binding
 - Basic arithmetic and conditionals
+- Let bindings
 
 ## Simplified  Grammar
 
@@ -85,7 +86,21 @@ constant = 42;
 -- Applies op to arguments a and b
 apply op a b = op a b;
 
-main = (apply (+) (curriedGcd 317523) (fibonacci 10)) * factorial 4 - constant;
+-- Calculates whether five is an odd number. Uses let bindings.
+isFiveOdd = let
+               isOdd n =
+                 if n == 0 then 0
+                 else if n == 1 then 1
+                 else if n > 1 then isOdd (n - 2)
+                 else isOdd (n + 2);
+
+               n = 5
+            in
+               isOdd n;
+
+main = isFiveOdd;
+
+main = (apply (+) (curriedGcd 317523) (fibonacci 10)) * factorial 4 - constant + isFiveOdd;
 ```
 
 ## Future Work
