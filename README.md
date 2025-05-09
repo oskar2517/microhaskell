@@ -87,18 +87,17 @@ constant = 42;
 apply op a b = op a b;
 
 -- Calculates whether five is an odd number. Uses let bindings.
-isFiveOdd = let
-               isOdd n =
-                 if n == 0 then 0
-                 else if n == 1 then 1
-                 else if n > 1 then isOdd (n - 2)
-                 else isOdd (n + 2);
+isFiveOdd = 
+    let
+        isOdd n =
+            if n == 0 then 0
+            else if n == 1 then 1
+            else if n > 1 then isOdd (n - 2)
+            else isOdd (n + 2);
 
-               n = 5
-            in
-               isOdd n;
-
-main = isFiveOdd;
+        n = 5
+    in
+        isOdd n;
 
 main = (apply (+) (curriedGcd 317523) (fibonacci 10)) * factorial 4 - constant + isFiveOdd;
 ```
