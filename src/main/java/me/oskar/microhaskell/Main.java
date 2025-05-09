@@ -1,7 +1,6 @@
 package me.oskar.microhaskell;
 
 import me.oskar.microhaskell.evaluation.Builtins;
-import me.oskar.microhaskell.evaluation.expression.*;
 import me.oskar.microhaskell.ir.IRGeneratorVisitor;
 import me.oskar.microhaskell.ir.RecursionAnalyzerVisitor;
 import me.oskar.microhaskell.lexer.Lexer;
@@ -38,7 +37,5 @@ public class Main {
 
         System.out.println(ir);
         System.out.println(ir.evaluate(Builtins.initialEnv()));
-
-        System.out.println(ast.toString());
     }
 }
