@@ -13,42 +13,6 @@ Micro Haskell is an interpreter for a small subset of the Haskell programming la
 - Basic arithmetic and conditionals
 - Let bindings
 
-## Simplified  Grammar
-
-Micro Haskell's grammar is closely related to that of full Haskell. This grammar has been simplified for better readability and does not include operator precedences.
-
-```ebnf
-program         ::= { definition } ;
-
-definition      ::= identifier { atomic } "=" expression ";" ;
-
-expression      ::= arithmetic ;
-
-arithmetic      ::= application
-                  | arithmetic operator application ;
-
-application     ::= term { term } ;
-
-term            ::= atomic
-                  | conditional
-                  | "(" expression ")" ;
-
-atomic          ::= identifier | integer ;
-
-conditional     ::= "if" expression "then" expression "else" expression ;
-
-operator        ::= "+" | "-" | "*" | "/" 
-                  | "<" | "<=" | ">" | ">=" ;
-
-integer         ::= digit { digit } ;
-
-identifier      ::= (letter | "_") { letter | digit | "_" } ;
-
-letter          ::= "a" | ... | "z" | "A" | ... | "Z" ;
-
-digit           ::= "0" | ... | "9" ;
-```
-
 ## Example
 
 The following example demonstrates recursive function definitions, arithmetic, currying, and higher-order functions in Micro Haskell:
