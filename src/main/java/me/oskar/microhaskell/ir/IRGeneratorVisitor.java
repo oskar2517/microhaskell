@@ -64,7 +64,8 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
             dispatchedLambdaBodies.put(functionDefinitionNode.getName(), body);
 
-            return new Application(new Variable(MUTUAL_DISPATCHER_NAME), new IntLiteral(functionDefinitionNode.getDispatchId()));
+            return new Application(new Variable(MUTUAL_DISPATCHER_NAME),
+                    new IntLiteral(functionDefinitionNode.getDispatchId()));
         }
 
         currentFunctionName = functionDefinitionNode.getName();
