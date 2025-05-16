@@ -10,7 +10,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
     private String currentFunctionName = null;
     private String recursiveAlias = null;
-    private final Map<String, LambdaDispatch> dispatchedLambdas = new HashMap<>();
+    private final Map<String, Expression> dispatchedLambdas = new HashMap<>();
     private Map<String, Integer> dispatchedLambdaIds;
     private boolean insideDispatcher = false;
 
@@ -66,7 +66,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
                 body = new Lambda(param.getName(), body);
             }
 
-            dispatchedLambdas.put(functionDefinitionNode.getName(), new LambdaDispatch(functionDefinitionNode.getDispatchId(), body));
+            dispatchedLambdas.put(functionDefinitionNode.getName(), body);
 
             return new Application(new Variable("dispatch"), new IntLiteral(functionDefinitionNode.getDispatchId()));
         }
@@ -156,19 +156,21 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
         Expression dispatcherBody = null;
 
         insideDispatcher = true;
-        for (var l : dispatchedLambdas.values()) {
+        for (var e : dispatchedLambdas.entrySet()) {
             if (dispatcherBody == null) {
-                dispatcherBody = l.lambda();
+                dispatcherBody = e.getValue();
             } else {
+                var dispatchId = dispatchedLambdaIds.get(e.getKey());
+
                 var condition = new Application(
                         new Application(new Variable("=="), new Variable("tag")),
-                        new IntLiteral(l.id())
+                        new IntLiteral(dispatchId)
                 );
 
                 dispatcherBody = new Application(
                         new Application(
                                 new Application(new Variable("if"), condition),
-                                l.lambda()),
+                                e.getValue()),
                         dispatcherBody);
             }
         }
