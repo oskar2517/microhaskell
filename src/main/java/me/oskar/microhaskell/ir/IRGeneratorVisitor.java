@@ -9,7 +9,8 @@ import java.util.*;
 public class IRGeneratorVisitor implements Visitor<Expression> {
 
     private String currentFunctionName = null;
-    private String recursiveAlias = null;
+    private final Map<String, Expression> dispatchedLambdaBodies = new HashMap<>();
+    private Map<String, Integer> dispatchedLambdaIds;
 
     private static final Expression Y_COMBINATOR = new Lambda("f",
             new Application(
@@ -28,11 +29,14 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
             )
     );
 
+    private static final String MUTUAL_DISPATCHER_NAME = "<mutual_dispatch>";
+    private static final String MUTUAL_DISPATCHER_TAG = "<tag>";
+
     @Override
     public Expression visit(AnonymousFunctionNode anonymousFunctionNode) {
         var body = anonymousFunctionNode.getBody().accept(this);
 
-        for (int i = anonymousFunctionNode.getParameters().size() - 1; i >= 0; i--) {
+        for (var i = anonymousFunctionNode.getParameters().size() - 1; i >= 0; i--) {
             var param = (IdentifierNode) anonymousFunctionNode.getParameters().get(i);
             body = new Lambda(param.getName(), body);
         }
@@ -50,13 +54,21 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
     @Override
     public Expression visit(FunctionDefinitionNode functionDefinitionNode) {
-        var previousFunctionName = currentFunctionName;
-        var previousAlias = recursiveAlias;
+        if (functionDefinitionNode.isAppliedMutuallyRecursively()) {
+            var body = functionDefinitionNode.getBody().accept(this);
+
+            for (int i = functionDefinitionNode.getParameters().size() - 1; i >= 0; i--) {
+                var param = (IdentifierNode) functionDefinitionNode.getParameters().get(i);
+                body = new Lambda(param.getName(), body);
+            }
+
+            dispatchedLambdaBodies.put(functionDefinitionNode.getName(), body);
+
+            return new Application(new Variable(MUTUAL_DISPATCHER_NAME),
+                    new IntLiteral(functionDefinitionNode.getDispatchId()));
+        }
 
         currentFunctionName = functionDefinitionNode.getName();
-        recursiveAlias = functionDefinitionNode.isAppliedRecursively()
-                ? "__rec_%s".formatted(currentFunctionName)
-                : null;
 
         var body = functionDefinitionNode.getBody().accept(this);
 
@@ -65,14 +77,10 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
             body = new Lambda(param.getName(), body);
         }
 
-        // Wrap in Y combinator if recursive
         if (functionDefinitionNode.isAppliedRecursively()) {
-            body = new Lambda(recursiveAlias, body);
+            body = new Lambda(currentFunctionName, body);
             body = new Application(Y_COMBINATOR, body);
         }
-
-        currentFunctionName = previousFunctionName;
-        recursiveAlias = previousAlias;
 
         return body;
     }
@@ -81,12 +89,19 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
     public Expression visit(IdentifierNode identifierNode) {
         var name = identifierNode.getName();
 
-        if (name.equals(currentFunctionName) && recursiveAlias != null) {
-            return new Variable(recursiveAlias);
+        if (dispatchedLambdaIds.containsKey(name)) {
+            var dispatchedLambdaId = dispatchedLambdaIds.get(name);
+
+            return new Application(new Variable(MUTUAL_DISPATCHER_NAME), new IntLiteral(dispatchedLambdaId));
+        }
+
+        if (name.equals(currentFunctionName)) {
+            return new Variable(currentFunctionName);
         }
 
         return new Variable(name);
     }
+
 
     @Override
     public Expression visit(IfNode ifNode) {
@@ -116,17 +131,53 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
     @Override
     public Expression visit(ProgramNode programNode) {
+        var lambdaCollector = new MutuallyRecursiveLambdaCollectorVisitor();
+        programNode.accept(lambdaCollector);
+        dispatchedLambdaIds = lambdaCollector.getLambdaIds();
+
         var functionIRs = new LinkedHashMap<String, Expression>();
         for (var d : programNode.getBindings()) {
             functionIRs.put(d.getName(), d.accept(this));
         }
 
+        Expression dispatcherBody = null;
+
+        for (var e : dispatchedLambdaBodies.entrySet()) {
+            if (dispatcherBody == null) {
+                dispatcherBody = e.getValue();
+            } else {
+                var dispatchId = dispatchedLambdaIds.get(e.getKey());
+
+                var condition = new Application(
+                        new Application(new Variable("=="), new Variable(MUTUAL_DISPATCHER_TAG)),
+                        new IntLiteral(dispatchId)
+                );
+
+                dispatcherBody = new Application(
+                        new Application(
+                                new Application(new Variable("if"), condition),
+                                e.getValue()),
+                        dispatcherBody);
+            }
+        }
+
+        dispatcherBody = new Lambda(MUTUAL_DISPATCHER_TAG, dispatcherBody);
+
+        var dispatcher = new Application(Y_COMBINATOR, new Lambda(MUTUAL_DISPATCHER_NAME, dispatcherBody));
+
         Expression body = new Variable("main");
-        for (String name : functionIRs.keySet().stream().toList().reversed()) {
+        for (var name : functionIRs.keySet().stream().toList().reversed()) {
             var expr = functionIRs.get(name);
             body = new Application(new Lambda(name, body), expr);
         }
 
+        body = new Application(
+                new Lambda(MUTUAL_DISPATCHER_NAME, body),
+                dispatcher
+        );
+
         return body;
     }
+
+
 }
