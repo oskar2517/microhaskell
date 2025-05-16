@@ -140,6 +140,15 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
             functionIRs.put(d.getName(), d.accept(this));
         }
 
+        Expression body = new Variable("main");
+        for (var name : functionIRs.keySet().stream().toList().reversed()) {
+            var expr = functionIRs.get(name);
+            body = new Application(new Lambda(name, body), expr);
+        }
+
+        // Only add dispatcher when necessary
+        if (dispatchedLambdaIds.isEmpty()) return body;
+
         Expression dispatcherBody = null;
 
         for (var e : dispatchedLambdaBodies.entrySet()) {
@@ -165,12 +174,6 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
         var dispatcher = new Application(Y_COMBINATOR, new Lambda(MUTUAL_DISPATCHER_NAME, dispatcherBody));
 
-        Expression body = new Variable("main");
-        for (var name : functionIRs.keySet().stream().toList().reversed()) {
-            var expr = functionIRs.get(name);
-            body = new Application(new Lambda(name, body), expr);
-        }
-
         body = new Application(
                 new Lambda(MUTUAL_DISPATCHER_NAME, body),
                 dispatcher
@@ -178,6 +181,4 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
         return body;
     }
-
-
 }
