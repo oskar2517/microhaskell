@@ -13,7 +13,7 @@ foldl f acc xs = foldr (\x g -> (\a -> g (f a x))) (\a -> a) xs acc;
 -- The tail of a list
 tail xs = \consCase nilCase ->
   xs (\x rest -> \skipped ->
-    if skipped == 1
+    if skipped
       then consCase x (rest 1)
       else rest 1
   ) (\_ -> nilCase) 0;
