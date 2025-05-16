@@ -9,10 +9,8 @@ import java.util.*;
 public class IRGeneratorVisitor implements Visitor<Expression> {
 
     private String currentFunctionName = null;
-    private String recursiveAlias = null;
     private final Map<String, Expression> dispatchedLambdaBodies = new HashMap<>();
     private Map<String, Integer> dispatchedLambdaIds;
-    private boolean insideDispatcher = false;
 
     private static final Expression Y_COMBINATOR = new Lambda("f",
             new Application(
@@ -56,12 +54,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
     @Override
     public Expression visit(FunctionDefinitionNode functionDefinitionNode) {
         if (functionDefinitionNode.isAppliedMutuallyRecursively()) {
-            var previousInsideDispatcher = insideDispatcher;
-            insideDispatcher = true;
-
             var body = functionDefinitionNode.getBody().accept(this);
-
-            insideDispatcher = previousInsideDispatcher;
 
             for (int i = functionDefinitionNode.getParameters().size() - 1; i >= 0; i--) {
                 var param = (IdentifierNode) functionDefinitionNode.getParameters().get(i);
@@ -73,13 +66,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
             return new Application(new Variable(MUTUAL_DISPATCHER_NAME), new IntLiteral(functionDefinitionNode.getDispatchId()));
         }
 
-        var previousFunctionName = currentFunctionName;
-        var previousAlias = recursiveAlias;
-
         currentFunctionName = functionDefinitionNode.getName();
-        recursiveAlias = functionDefinitionNode.isAppliedRecursively()
-                ? "__rec_%s".formatted(currentFunctionName)
-                : null;
 
         var body = functionDefinitionNode.getBody().accept(this);
 
@@ -89,12 +76,9 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
         }
 
         if (functionDefinitionNode.isAppliedRecursively()) {
-            body = new Lambda(recursiveAlias, body);
+            body = new Lambda(currentFunctionName, body);
             body = new Application(Y_COMBINATOR, body);
         }
-
-        currentFunctionName = previousFunctionName;
-        recursiveAlias = previousAlias;
 
         return body;
     }
@@ -105,13 +89,12 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
         if (dispatchedLambdaIds.containsKey(name)) {
             var dispatchedLambdaId = dispatchedLambdaIds.get(name);
-            var dispatcherName = insideDispatcher ? "__rec_%s".formatted(MUTUAL_DISPATCHER_NAME) : MUTUAL_DISPATCHER_NAME;
 
-            return new Application(new Variable(dispatcherName), new IntLiteral(dispatchedLambdaId));
+            return new Application(new Variable(MUTUAL_DISPATCHER_NAME), new IntLiteral(dispatchedLambdaId));
         }
 
-        if (name.equals(currentFunctionName) && recursiveAlias != null) {
-            return new Variable(recursiveAlias);
+        if (name.equals(currentFunctionName)) {
+            return new Variable(currentFunctionName);
         }
 
         return new Variable(name);
@@ -157,7 +140,6 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
         Expression dispatcherBody = null;
 
-        insideDispatcher = true;
         for (var e : dispatchedLambdaBodies.entrySet()) {
             if (dispatcherBody == null) {
                 dispatcherBody = e.getValue();
@@ -176,11 +158,10 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
                         dispatcherBody);
             }
         }
-        insideDispatcher = false;
 
         dispatcherBody = new Lambda("tag", dispatcherBody);
 
-        var dispatcher = new Application(Y_COMBINATOR, new Lambda("__rec_%s".formatted(MUTUAL_DISPATCHER_NAME), dispatcherBody));
+        var dispatcher = new Application(Y_COMBINATOR, new Lambda(MUTUAL_DISPATCHER_NAME, dispatcherBody));
 
         Expression body = new Variable("main");
         for (var name : functionIRs.keySet().stream().toList().reversed()) {
