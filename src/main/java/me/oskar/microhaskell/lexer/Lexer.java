@@ -118,6 +118,7 @@ public class Lexer {
             }
             case '!' -> {
                 if (readChar() == '=') {
+                    nextChar();
                     yield new Token(TokenType.NOT_EQUAL, "!=");
                 }
                 yield new Token(TokenType.ILLEGAL, String.valueOf(currentChar));
