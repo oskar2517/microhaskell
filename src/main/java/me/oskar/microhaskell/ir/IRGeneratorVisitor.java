@@ -31,6 +31,8 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
             )
     );
 
+    private static final String MUTUAL_DISPATCHER_NAME = "<mutual_dispatch>";
+
     @Override
     public Expression visit(AnonymousFunctionNode anonymousFunctionNode) {
         var body = anonymousFunctionNode.getBody().accept(this);
@@ -68,7 +70,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
             dispatchedLambdaBodies.put(functionDefinitionNode.getName(), body);
 
-            return new Application(new Variable("dispatch"), new IntLiteral(functionDefinitionNode.getDispatchId()));
+            return new Application(new Variable(MUTUAL_DISPATCHER_NAME), new IntLiteral(functionDefinitionNode.getDispatchId()));
         }
 
         var previousFunctionName = currentFunctionName;
@@ -103,7 +105,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
         if (dispatchedLambdaIds.containsKey(name)) {
             var dispatchedLambdaId = dispatchedLambdaIds.get(name);
-            var dispatcherName = insideDispatcher ? "__rec_dispatch" : "dispatch";
+            var dispatcherName = insideDispatcher ? "__rec_%s".formatted(MUTUAL_DISPATCHER_NAME) : MUTUAL_DISPATCHER_NAME;
 
             return new Application(new Variable(dispatcherName), new IntLiteral(dispatchedLambdaId));
         }
@@ -178,7 +180,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
         dispatcherBody = new Lambda("tag", dispatcherBody);
 
-        var dispatcher = new Application(Y_COMBINATOR, new Lambda("__rec_dispatch", dispatcherBody));
+        var dispatcher = new Application(Y_COMBINATOR, new Lambda("__rec_%s".formatted(MUTUAL_DISPATCHER_NAME), dispatcherBody));
 
         Expression body = new Variable("main");
         for (var name : functionIRs.keySet().stream().toList().reversed()) {
@@ -187,7 +189,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
         }
 
         body = new Application(
-                new Lambda("dispatch", body),
+                new Lambda(MUTUAL_DISPATCHER_NAME, body),
                 dispatcher
         );
 
