@@ -10,7 +10,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
     private String currentFunctionName = null;
     private String recursiveAlias = null;
-    private final Map<String, Expression> dispatchedLambdas = new HashMap<>();
+    private final Map<String, Expression> dispatchedLambdaBodies = new HashMap<>();
     private Map<String, Integer> dispatchedLambdaIds;
     private boolean insideDispatcher = false;
 
@@ -66,7 +66,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
                 body = new Lambda(param.getName(), body);
             }
 
-            dispatchedLambdas.put(functionDefinitionNode.getName(), body);
+            dispatchedLambdaBodies.put(functionDefinitionNode.getName(), body);
 
             return new Application(new Variable("dispatch"), new IntLiteral(functionDefinitionNode.getDispatchId()));
         }
@@ -156,7 +156,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
         Expression dispatcherBody = null;
 
         insideDispatcher = true;
-        for (var e : dispatchedLambdas.entrySet()) {
+        for (var e : dispatchedLambdaBodies.entrySet()) {
             if (dispatcherBody == null) {
                 dispatcherBody = e.getValue();
             } else {
