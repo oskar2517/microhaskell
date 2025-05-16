@@ -35,7 +35,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
     public Expression visit(AnonymousFunctionNode anonymousFunctionNode) {
         var body = anonymousFunctionNode.getBody().accept(this);
 
-        for (int i = anonymousFunctionNode.getParameters().size() - 1; i >= 0; i--) {
+        for (var i = anonymousFunctionNode.getParameters().size() - 1; i >= 0; i--) {
             var param = (IdentifierNode) anonymousFunctionNode.getParameters().get(i);
             body = new Lambda(param.getName(), body);
         }
@@ -54,16 +54,12 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
     @Override
     public Expression visit(FunctionDefinitionNode functionDefinitionNode) {
         if (functionDefinitionNode.isAppliedMutuallyRecursively()) {
+            var previousInsideDispatcher = insideDispatcher;
+            insideDispatcher = true;
 
-            Expression body;
-            if (functionDefinitionNode.isAppliedMutuallyRecursively()) {
-                boolean previousInsideDispatcher = insideDispatcher;
-                insideDispatcher = true;
-                body = functionDefinitionNode.getBody().accept(this);
-                insideDispatcher = previousInsideDispatcher;
-            } else {
-                body = functionDefinitionNode.getBody().accept(this);
-            }
+            var body = functionDefinitionNode.getBody().accept(this);
+
+            insideDispatcher = previousInsideDispatcher;
 
             for (int i = functionDefinitionNode.getParameters().size() - 1; i >= 0; i--) {
                 var param = (IdentifierNode) functionDefinitionNode.getParameters().get(i);
@@ -103,14 +99,13 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
     @Override
     public Expression visit(IdentifierNode identifierNode) {
-        String name = identifierNode.getName();
+        var name = identifierNode.getName();
 
         if (dispatchedLambdaIds.containsKey(name)) {
-            int dispatchedLambdaId = dispatchedLambdaIds.get(name);
+            var dispatchedLambdaId = dispatchedLambdaIds.get(name);
+            var dispatcherName = insideDispatcher ? "__rec_dispatch" : "dispatch";
 
-            String dispatcherVar = insideDispatcher ? "__rec_dispatch" : "dispatch";
-
-            return new Application(new Variable(dispatcherVar), new IntLiteral(dispatchedLambdaId));
+            return new Application(new Variable(dispatcherName), new IntLiteral(dispatchedLambdaId));
         }
 
         if (name.equals(currentFunctionName) && recursiveAlias != null) {
@@ -158,37 +153,33 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
             functionIRs.put(d.getName(), d.accept(this));
         }
 
-        Expression dispatchBody = null;
-
-        var sortedLambdas = dispatchedLambdas.values().stream()
-                .sorted(Comparator.comparingInt(LambdaDispatch::id))
-                .toList();
+        Expression dispatcherBody = null;
 
         insideDispatcher = true;
-        for (var l : sortedLambdas.reversed()) {
-            Expression tagEq = new Application(
-                    new Application(new Variable("=="), new Variable("tag")),
-                    new IntLiteral(l.id())
-            );
+        for (var l : dispatchedLambdas.values()) {
+            if (dispatcherBody == null) {
+                dispatcherBody = l.lambda();
+            } else {
+                var condition = new Application(
+                        new Application(new Variable("=="), new Variable("tag")),
+                        new IntLiteral(l.id())
+                );
 
-            Expression lambdaExpr = l.lambda();
-            dispatchBody = dispatchBody == null
-                    ? lambdaExpr
-                    : new Application(
-                    new Application(
-                            new Application(new Variable("if"), tagEq),
-                            lambdaExpr),
-                    dispatchBody);
+                dispatcherBody = new Application(
+                        new Application(
+                                new Application(new Variable("if"), condition),
+                                l.lambda()),
+                        dispatcherBody);
+            }
         }
         insideDispatcher = false;
 
-        dispatchBody = new Lambda("tag", dispatchBody);
-        Expression dispatcher = new Lambda("__rec_dispatch", dispatchBody);
-        dispatcher = new Application(Y_COMBINATOR, dispatcher);
+        dispatcherBody = new Lambda("tag", dispatcherBody);
 
+        var dispatcher = new Application(Y_COMBINATOR, new Lambda("__rec_dispatch", dispatcherBody));
 
         Expression body = new Variable("main");
-        for (String name : functionIRs.keySet().stream().toList().reversed()) {
+        for (var name : functionIRs.keySet().stream().toList().reversed()) {
             var expr = functionIRs.get(name);
             body = new Application(new Lambda(name, body), expr);
         }

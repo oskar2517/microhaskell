@@ -33,6 +33,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
         currentFunctionName = functionDefinitionNode.getName();
         currentFunctionCalls = new HashSet<>();
         functionDefinitionNode.getBody().accept(this);
+
         return null;
     }
 
@@ -40,18 +41,21 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
     public Void visit(FunctionApplicationNode functionApplicationNode) {
         functionApplicationNode.getFunction().accept(this);
         functionApplicationNode.getArgument().accept(this);
+
         return null;
     }
 
     @Override
     public Void visit(IdentifierNode identifierNode) {
         currentFunctionCalls.add(identifierNode.getName());
+
         return null;
     }
 
     @Override
     public Void visit(AnonymousFunctionNode anonymousFunctionNode) {
         anonymousFunctionNode.getBody().accept(this);
+
         return null;
     }
 
@@ -60,6 +64,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
         ifNode.getCondition().accept(this);
         ifNode.getConsequence().accept(this);
         ifNode.getAlternative().accept(this);
+
         return null;
     }
 
@@ -68,15 +73,11 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
         letNode.getExpression().accept(this);
 
         for (var b : letNode.getBindings()) {
-            if (b instanceof FunctionDefinitionNode fn) {
-                nameToNode.put(fn.getName(), fn);
-                currentFunctionName = fn.getName();
-                currentFunctionCalls = new HashSet<>();
-                fn.accept(this);
-                callGraph.put(currentFunctionName, currentFunctionCalls);
-            } else {
-                b.accept(this);
-            }
+            nameToNode.put(b.getName(), b);
+            currentFunctionName = b.getName();
+            currentFunctionCalls = new HashSet<>();
+            b.accept(this);
+            callGraph.put(currentFunctionName, currentFunctionCalls);
         }
 
         return null;
@@ -84,18 +85,18 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
 
     private void detectRecursionViaSCC() {
-        Map<String, Integer> indexMap = new HashMap<>();
-        Map<String, Integer> lowLinkMap = new HashMap<>();
-        Deque<String> stack = new ArrayDeque<>();
-        Set<String> onStack = new HashSet<>();
-        List<Set<String>> sccs = new ArrayList<>();
+        var indexMap = new HashMap<String, Integer>();
+        var lowLinkMap = new HashMap<String, Integer>();
+        var stack = new ArrayDeque<String>();
+        var onStack = new HashSet<String>();
+        var sccs = new ArrayList<Set<String>>();
 
-        int[] index = {0};
+        var index = new int[]{0};
 
-        for (String function : callGraph.keySet()) {
-            if (!indexMap.containsKey(function)) {
-                strongConnect(function, index, indexMap, lowLinkMap, stack, onStack, sccs);
-            }
+        for (var function : callGraph.keySet()) {
+            if (indexMap.containsKey(function)) continue;
+
+            strongConnect(function, index, indexMap, lowLinkMap, stack, onStack, sccs);
         }
 
         for (Set<String> scc : sccs) {
@@ -104,7 +105,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
                     nameToNode.get(fn).setAppliedMutuallyRecursively(true);
                 }
             } else {
-                String fn = scc.iterator().next();
+                var fn = scc.iterator().next();
                 if (callGraph.getOrDefault(fn, Set.of()).contains(fn)) {
                     nameToNode.get(fn).setAppliedRecursively(true);
                 }
@@ -127,7 +128,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
         stack.push(function);
         onStack.add(function);
 
-        for (String callee : callGraph.getOrDefault(function, Set.of())) {
+        for (var callee : callGraph.getOrDefault(function, Set.of())) {
             if (!indexMap.containsKey(callee)) {
                 strongConnect(callee, index, indexMap, lowLinkMap, stack, onStack, sccs);
                 lowLinkMap.put(function, Math.min(lowLinkMap.get(function), lowLinkMap.get(callee)));
@@ -137,7 +138,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
         }
 
         if (lowLinkMap.get(function).equals(indexMap.get(function))) {
-            Set<String> scc = new HashSet<>();
+            var scc = new HashSet<String>();
             String fn;
             do {
                 fn = stack.pop();
