@@ -29,6 +29,18 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
     );
 
     @Override
+    public Expression visit(AnonymousFunctionNode anonymousFunctionNode) {
+        var body = anonymousFunctionNode.getBody().accept(this);
+
+        for (int i = anonymousFunctionNode.getParameters().size() - 1; i >= 0; i--) {
+            var param = (IdentifierNode) anonymousFunctionNode.getParameters().get(i);
+            body = new Lambda(param.getName(), body);
+        }
+
+        return body;
+    }
+
+    @Override
     public Expression visit(FunctionApplicationNode functionApplicationNode) {
         return new Application(
                 functionApplicationNode.getFunction().accept(this),

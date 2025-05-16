@@ -99,9 +99,16 @@ public class Lexer {
             case '(' -> new Token(TokenType.L_PAREN, "(");
             case ')' -> new Token(TokenType.R_PAREN, ")");
             case '+' -> new Token(TokenType.PLUS, "+");
-            case '-' -> new Token(TokenType.MINUS, "-");
+            case '-' -> {
+                if (readChar() == '>') {
+                    nextChar();
+                    yield new Token(TokenType.ARROW, "->");
+                }
+                yield new Token(TokenType.MINUS, "-");
+            }
             case '*' -> new Token(TokenType.ASTERISK, "*");
             case '/' -> new Token(TokenType.SLASH, "/");
+            case '\\' -> new Token(TokenType.BACKSLASH, "\\");
             case '=' -> {
                 if (readChar() == '=') {
                     nextChar();

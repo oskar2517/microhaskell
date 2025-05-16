@@ -68,6 +68,25 @@ public class Parser {
         return new FunctionDefinitionNode(name, parameters, expression);
     }
 
+    private AnonymousFunctionNode parseAnonymousFunction() {
+        eatToken(TokenType.BACKSLASH);
+
+        var parameters = new ArrayList<AtomicExpressionNode>();
+        while (currentToken.type() != TokenType.ARROW && currentToken.type() != TokenType.EOF) {
+            parameters.add(parseAtomicExpression());
+        }
+
+        if (parameters.isEmpty()) {
+            throw new RuntimeException("An anonymous function expects at least one parameter");
+        }
+
+        eatToken(TokenType.ARROW);
+
+        var expression = parseExpression();
+
+        return new AnonymousFunctionNode(parameters, expression);
+    }
+
     private ExpressionNode parseExpression() {
         return parseLet();
     }
@@ -178,6 +197,7 @@ public class Parser {
                 yield expression;
             }
             case IF -> parseIf();
+            case BACKSLASH -> parseAnonymousFunction();
             default -> parseAtomicExpression();
         };
     }

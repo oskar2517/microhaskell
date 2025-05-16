@@ -9,6 +9,13 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
     private boolean foundRecursiveCall = false;
 
     @Override
+    public Void visit(AnonymousFunctionNode anonymousFunctionNode) {
+        anonymousFunctionNode.getBody().accept(this);
+
+        return null;
+    }
+
+    @Override
     public Void visit(FunctionDefinitionNode functionDefinitionNode) {
         currentFunctionName = functionDefinitionNode.getName();
         foundRecursiveCall = false;

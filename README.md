@@ -8,6 +8,7 @@ Micro Haskell is an interpreter for a small subset of the Haskell programming la
 - Dynamic typing
 - Function definitions
 - Function applications
+- nonymous functions (Lambdas)
 - Currying
 - Recursive binding
 - Basic arithmetic and conditionals
@@ -30,7 +31,7 @@ fibonacci n =
 -- Calculates the modulo of a and b
 mod a m =
     if (a - m * (a / m)) < 0
-    then (a - m * (a / m)) + (if m < 0 then (0 - m) else m)
+    then (a - m * (a / m)) + abs m
     else a - m * (a / m);
 
 -- Returns the absolute value of x
@@ -51,7 +52,7 @@ constant = 42;
 apply op a b = op a b;
 
 -- Calculates whether five is an odd number. Uses let bindings.
-isFiveOdd = 
+isFiveOdd =
     let
         isOdd n =
             if n == 0 then 0
@@ -63,7 +64,9 @@ isFiveOdd =
     in
         isOdd n;
 
-main = (apply (+) (curriedGcd 317523) (fibonacci 10)) * factorial 4 - constant + isFiveOdd;
+lambda = (\x y -> x * y) 3 4;
+
+main = (apply (+) (curriedGcd 317523) (fibonacci 10)) * factorial 4 - constant + isFiveOdd * lambda;
 ```
 
 ## Future Work

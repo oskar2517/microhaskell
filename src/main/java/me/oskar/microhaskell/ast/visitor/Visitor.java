@@ -4,6 +4,8 @@ import me.oskar.microhaskell.ast.*;
 
 public interface Visitor<T> {
 
+    T visit(AnonymousFunctionNode anonymousFunctionNode);
+
     T visit(FunctionApplicationNode functionApplicationNode);
 
     T visit(FunctionDefinitionNode functionDefinitionNode);

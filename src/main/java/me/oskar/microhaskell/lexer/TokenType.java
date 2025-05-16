@@ -25,6 +25,9 @@ public enum TokenType {
     ASTERISK("*"),
     SLASH("/"),
 
+    BACKSLASH("\\"),
+    ARROW("->"),
+
     SEMICOLON(";"),
 
     DEFINE("="),
