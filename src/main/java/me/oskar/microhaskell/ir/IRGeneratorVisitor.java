@@ -30,6 +30,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
     );
 
     private static final String MUTUAL_DISPATCHER_NAME = "<mutual_dispatch>";
+    private static final String MUTUAL_DISPATCHER_TAG = "<tag>";
 
     @Override
     public Expression visit(AnonymousFunctionNode anonymousFunctionNode) {
@@ -147,7 +148,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
                 var dispatchId = dispatchedLambdaIds.get(e.getKey());
 
                 var condition = new Application(
-                        new Application(new Variable("=="), new Variable("tag")),
+                        new Application(new Variable("=="), new Variable(MUTUAL_DISPATCHER_TAG)),
                         new IntLiteral(dispatchId)
                 );
 
@@ -159,7 +160,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
             }
         }
 
-        dispatcherBody = new Lambda("tag", dispatcherBody);
+        dispatcherBody = new Lambda(MUTUAL_DISPATCHER_TAG, dispatcherBody);
 
         var dispatcher = new Application(Y_COMBINATOR, new Lambda(MUTUAL_DISPATCHER_NAME, dispatcherBody));
 
