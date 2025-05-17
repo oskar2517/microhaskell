@@ -7,5 +7,4 @@ f1 n = if n == 0 then 1 else f2 (n - 1);
 -- f2 calls f0
 f2 n = if n == 0 then 2 else f0 (n - 1);
 
--- Entry point
 main = f0 4;
