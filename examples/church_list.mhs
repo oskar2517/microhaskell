@@ -25,7 +25,7 @@ head xs = xs (\x _ -> x) 0;
 map f xs = \consCase nilCase -> xs (\x rest -> consCase (f x) rest) nilCase;
 
 -- Sums all elements in a list
-sum = foldr (\x acc -> x + acc) 0;
+sum = foldr (+) 0;
 
 -- Example list: [1, 2, 3, 4]
 exampleList = cons 1 (cons 2 (cons 3 (cons 4 nil)));
