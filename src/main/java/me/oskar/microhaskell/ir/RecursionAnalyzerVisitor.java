@@ -67,10 +67,15 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
             b.getBody().accept(localAnalyzer);
             callGraph.put(entry.getDispatchId(), functionApplications);
+
+            if (functionApplications.contains(entry.getDispatchId())) {
+                recursiveBindings.put(entry.getDispatchId(), entry);
+            }
         }
 
         return null;
     }
+
 
     @Override
     public Void visit(FunctionApplicationNode functionApplicationNode) {
