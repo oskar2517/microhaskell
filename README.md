@@ -56,13 +56,16 @@ isFiveOdd =
     let
         isOdd n =
             if n == 0 then 0
-            else if n == 1 then 1
-            else if n > 1 then isOdd (n - 2)
-            else isOdd (n + 2);
+            else isEven (n - 1);
+
+        isEven n =
+            if n == 0 then 1
+            else isOdd (n - 1);
 
         n = 5
     in
         isOdd n;
+
 
 lambda = (\x y -> x * y) 3 4;
 
