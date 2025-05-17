@@ -102,9 +102,9 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
     public Void visit(IdentifierNode identifierNode) {
         if (currentApplications == null) return null; // Top-level or untracked context
 
-        var entry = (BindingEntry) currentTable.lookup(identifierNode.getName());
-        if (entry != null) {
-            currentApplications.add(entry.getDispatchId());
+        var entry = currentTable.lookup(identifierNode.getName());
+        if (entry != null && entry instanceof BindingEntry be) {
+            currentApplications.add(be.getDispatchId());
         }
         return null;
     }

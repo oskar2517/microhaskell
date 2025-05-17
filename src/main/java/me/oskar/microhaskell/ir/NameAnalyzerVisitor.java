@@ -4,6 +4,7 @@ import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.ast.visitor.BaseVisitor;
 import me.oskar.microhaskell.table.BindingEntry;
 import me.oskar.microhaskell.table.SymbolTable;
+import me.oskar.microhaskell.table.VariableEntry;
 
 public class NameAnalyzerVisitor extends BaseVisitor<Void> {
 
@@ -17,6 +18,10 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
     public Void visit(FunctionDefinitionNode functionDefinitionNode) {
         var localTable = new SymbolTable(functionDefinitionNode.getName(), currentTable);
         var localNameAnalyzerVisitor = new NameAnalyzerVisitor(localTable);
+
+        for (var p : functionDefinitionNode.getParameters()) {
+            localTable.enter(((IdentifierNode) p).getName(), new VariableEntry());
+        }
 
         functionDefinitionNode.getBody().accept(localNameAnalyzerVisitor);
 

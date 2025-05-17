@@ -93,10 +93,10 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
     public Expression visit(IdentifierNode identifierNode) {
         var name = identifierNode.getName();
 
-        var entry = (BindingEntry) currentTable.lookup(name);
+        var entry = currentTable.lookup(name);
 
-        if (entry != null && entry.isAppliedMutuallyRecursively()) {
-            return new Application(new Variable(MUTUAL_DISPATCHER_NAME), new IntLiteral(entry.getDispatchId()));
+        if (entry != null && entry instanceof BindingEntry be && be.isAppliedMutuallyRecursively()) {
+            return new Application(new Variable(MUTUAL_DISPATCHER_NAME), new IntLiteral(be.getDispatchId()));
         }
 
         return new Variable(name);
