@@ -12,7 +12,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
     private final Map<Integer, Set<Integer>> callGraph;
     private final Map<Integer, BindingEntry> recursiveBindings;
 
-    private final SymbolTable currentTable;
+    protected final SymbolTable currentTable;
 
     public RecursionAnalyzerVisitor(SymbolTable symbolTable) {
         this(symbolTable, new HashMap<>(), new HashMap<>());
@@ -50,7 +50,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
             @Override
             public Void visit(IdentifierNode identifierNode) {
-                var identifierEntry = (BindingEntry) currentTable.lookup(identifierNode.getName());
+                var identifierEntry = (BindingEntry) this.currentTable.lookup(identifierNode.getName());
                 if (identifierEntry != null) {
                     functionApplications.add(identifierEntry.getDispatchId());
                 }
@@ -67,15 +67,28 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(LetNode letNode) {
-        letNode.getExpression().accept(this);
+        letNode.getExpression().accept(this); 
 
         for (var b : letNode.getBindings()) {
             var entry = (BindingEntry) currentTable.lookup(b.getName());
+            recursiveBindings.put(entry.getDispatchId(), entry);
             callGraph.putIfAbsent(entry.getDispatchId(), new HashSet<>());
-        }
 
-        for (var b : letNode.getBindings()) {
-            b.accept(this);
+            var functionApplications = new HashSet<Integer>();
+
+            var localAnalyzer = new RecursionAnalyzerVisitor(entry.getLocalTable(), callGraph, recursiveBindings) {
+                @Override
+                public Void visit(IdentifierNode identifierNode) {
+                    var identifierEntry = (BindingEntry) this.currentTable.lookup(identifierNode.getName());
+                    if (identifierEntry != null) {
+                        functionApplications.add(identifierEntry.getDispatchId());
+                    }
+                    return null;
+                }
+            };
+
+            b.getBody().accept(localAnalyzer);
+            callGraph.put(entry.getDispatchId(), functionApplications);
         }
 
         return null;
