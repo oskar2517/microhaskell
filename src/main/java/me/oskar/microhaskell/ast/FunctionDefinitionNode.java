@@ -4,7 +4,7 @@ import me.oskar.microhaskell.ast.visitor.Visitor;
 
 import java.util.List;
 
-public class FunctionDefinitionNode extends Node {
+public class FunctionDefinitionNode extends Node implements FunctionNode {
 
     private static int dispatchCounter = 0;
 
@@ -29,10 +29,12 @@ public class FunctionDefinitionNode extends Node {
         return name;
     }
 
+    @Override
     public List<AtomicExpressionNode> getParameters() {
         return parameters;
     }
 
+    @Override
     public ExpressionNode getBody() {
         return body;
     }
