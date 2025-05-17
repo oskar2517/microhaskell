@@ -10,38 +10,31 @@ import java.util.*;
 public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
     private final Map<Integer, Set<Integer>> callGraph;
-    private final Map<Integer, FunctionDefinitionNode> nameToNode;
-    private final Map<Integer, BindingEntry> seenEntries;
+    private final Map<Integer, BindingEntry> recursiveBindings;
 
-    private final Integer currentFunctionName;
     private final SymbolTable currentTable;
 
     public RecursionAnalyzerVisitor(SymbolTable symbolTable) {
-        this(symbolTable, null, new HashMap<>(), new HashMap<>(), new HashMap<>());
+        this(symbolTable, new HashMap<>(), new HashMap<>());
     }
 
-    private RecursionAnalyzerVisitor(SymbolTable symbolTable, Integer currentFunctionName,
+    private RecursionAnalyzerVisitor(SymbolTable symbolTable,
                                      Map<Integer, Set<Integer>> callGraph,
-                                     Map<Integer, FunctionDefinitionNode> nameToNode,
-                                     Map<Integer, BindingEntry> seenEntries) {
+                                     Map<Integer, BindingEntry> recursiveBindings) {
         this.currentTable = symbolTable;
-        this.currentFunctionName = currentFunctionName;
         this.callGraph = callGraph;
-        this.nameToNode = nameToNode;
-        this.seenEntries = seenEntries;
+        this.recursiveBindings = recursiveBindings;
     }
 
     @Override
     public Void visit(ProgramNode programNode) {
         for (var binding : programNode.getBindings()) {
-            if (binding instanceof FunctionDefinitionNode fn) {
-                var entry = (BindingEntry) currentTable.lookup(fn.getName());
-                nameToNode.put(entry.getDispatchId(), fn);
-                fn.accept(this);
-            }
+            if (!(binding instanceof FunctionDefinitionNode fn)) continue;
+            fn.accept(this);
         }
 
         detectRecursionViaSCC();
+
         return null;
     }
 
@@ -49,23 +42,25 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
     public Void visit(FunctionDefinitionNode functionDefinitionNode) {
         var entry = (BindingEntry) currentTable.lookup(functionDefinitionNode.getName());
 
-        Set<Integer> functionCalls = new HashSet<>();
+        var functionApplications = new HashSet<Integer>();
 
-        seenEntries.put(entry.getDispatchId(), entry);
+        recursiveBindings.put(entry.getDispatchId(), entry);
 
-        var localVisitor = new RecursionAnalyzerVisitor(entry.getLocalTable(), entry.getDispatchId(), callGraph, nameToNode, seenEntries) {
+        var localRecursionAnalyzer = new RecursionAnalyzerVisitor(entry.getLocalTable(), callGraph, recursiveBindings) {
+
             @Override
             public Void visit(IdentifierNode identifierNode) {
-                var idEntry = (BindingEntry) currentTable.lookup(identifierNode.getName());
-                if (idEntry != null) {
-                    functionCalls.add(idEntry.getDispatchId());
+                var identifierEntry = (BindingEntry) currentTable.lookup(identifierNode.getName());
+                if (identifierEntry != null) {
+                    functionApplications.add(identifierEntry.getDispatchId());
                 }
+
                 return null;
             }
         };
 
-        functionDefinitionNode.getBody().accept(localVisitor);
-        callGraph.put(entry.getDispatchId(), functionCalls);
+        functionDefinitionNode.getBody().accept(localRecursionAnalyzer);
+        callGraph.put(entry.getDispatchId(), functionApplications);
 
         return null;
     }
@@ -76,50 +71,28 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
         for (var b : letNode.getBindings()) {
             var entry = (BindingEntry) currentTable.lookup(b.getName());
-            nameToNode.put(b.getDispatchId(), b);
             callGraph.putIfAbsent(entry.getDispatchId(), new HashSet<>());
         }
 
         for (var b : letNode.getBindings()) {
-            var entry = (BindingEntry) currentTable.lookup(b.getName());
-
-            if (entry == null) {
-                continue;
-            }
-
-            seenEntries.put(b.getDispatchId(), entry);
-
-            Set<Integer> calls = new HashSet<>();
-
-            var localVisitor = new RecursionAnalyzerVisitor(entry.getLocalTable(), entry.getDispatchId(), callGraph, nameToNode, seenEntries) {
-                @Override
-                public Void visit(IdentifierNode identifierNode) {
-                    var idEntry = (BindingEntry) currentTable.lookup(identifierNode.getName());
-                    if (idEntry != null) {
-                        calls.add(idEntry.getDispatchId());
-                    }
-                    return null;
-                }
-            };
-
-            b.getBody().accept(localVisitor);
-            callGraph.put(entry.getDispatchId(), calls);
+            b.accept(this);
         }
 
         return null;
     }
 
-
     @Override
     public Void visit(FunctionApplicationNode functionApplicationNode) {
         functionApplicationNode.getFunction().accept(this);
         functionApplicationNode.getArgument().accept(this);
+
         return null;
     }
 
     @Override
     public Void visit(AnonymousFunctionNode anonymousFunctionNode) {
         anonymousFunctionNode.getBody().accept(this);
+
         return null;
     }
 
@@ -128,6 +101,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
         ifNode.getCondition().accept(this);
         ifNode.getConsequence().accept(this);
         ifNode.getAlternative().accept(this);
+
         return null;
     }
 
@@ -149,13 +123,13 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
         for (var scc : sccs) {
             if (scc.size() > 1) {
                 for (var fn : scc) {
-                    var entry = seenEntries.get(fn);
+                    var entry = recursiveBindings.get(fn);
                     entry.setAppliedMutuallyRecursively(true);
                 }
             } else {
                 var fn = scc.iterator().next();
                 if (callGraph.getOrDefault(fn, Set.of()).contains(fn)) {
-                    var entry = seenEntries.get(fn);
+                    var entry = recursiveBindings.get(fn);
                     entry.setAppliedRecursively(true);
                 }
             }
@@ -188,12 +162,12 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
         if (lowLinkMap.get(function).equals(indexMap.get(function))) {
             var scc = new HashSet<Integer>();
-            Integer fn;
+            int fn;
             do {
                 fn = stack.pop();
                 onStack.remove(fn);
                 scc.add(fn);
-            } while (!fn.equals(function));
+            } while (fn != function);
             sccs.add(scc);
         }
     }
