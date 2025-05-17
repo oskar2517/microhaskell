@@ -1,0 +1,7 @@
+test =
+    let f0 n = let f0 = if n == 0 then 0 else f1 (n - 1) in f0;
+        f1 n = if n == 0 then 1 else f2 (n - 1);
+        f2 n = let f1 = if n == 0 then 2 else f0 (n - 1) in f1
+    in f0;
+
+main = test 4;
