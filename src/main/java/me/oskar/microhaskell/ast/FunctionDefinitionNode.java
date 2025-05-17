@@ -13,10 +13,6 @@ public class FunctionDefinitionNode extends Node implements FunctionNode {
     private final ExpressionNode body;
 
     @Node.NoProperty
-    private boolean appliedRecursively = false;
-    @Node.NoProperty
-    private boolean isAppliedMutuallyRecursively = false;
-    @Node.NoProperty
     private final int dispatchId = dispatchCounter++;
 
     public FunctionDefinitionNode(String name, List<AtomicExpressionNode> parameters, ExpressionNode body) {
@@ -37,22 +33,6 @@ public class FunctionDefinitionNode extends Node implements FunctionNode {
     @Override
     public ExpressionNode getBody() {
         return body;
-    }
-
-    public boolean isAppliedRecursively() {
-        return appliedRecursively;
-    }
-
-    public void setAppliedRecursively(boolean recursive) {
-        appliedRecursively = recursive;
-    }
-
-    public boolean isAppliedMutuallyRecursively() {
-        return isAppliedMutuallyRecursively;
-    }
-
-    public void setAppliedMutuallyRecursively(boolean recursive) {
-        isAppliedMutuallyRecursively = recursive;
     }
 
     public int getDispatchId() {

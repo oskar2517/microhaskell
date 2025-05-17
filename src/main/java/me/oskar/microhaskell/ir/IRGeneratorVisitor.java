@@ -3,13 +3,25 @@ package me.oskar.microhaskell.ir;
 import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.ast.visitor.Visitor;
 import me.oskar.microhaskell.evaluation.expression.*;
+import me.oskar.microhaskell.table.BindingEntry;
+import me.oskar.microhaskell.table.SymbolTable;
 
 import java.util.*;
 
 public class IRGeneratorVisitor implements Visitor<Expression> {
 
-    private final Map<String, Expression> dispatchedLambdaBodies = new HashMap<>();
-    private Map<String, Integer> dispatchedLambdaIds;
+    private final Map<Integer, Expression> dispatchedLambdaBodies;
+
+    private SymbolTable currentTable;
+
+    public IRGeneratorVisitor(SymbolTable currentTable) {
+        this(currentTable, new HashMap<>());
+    }
+
+    private IRGeneratorVisitor(SymbolTable currentTable, Map<Integer, Expression> dispatchedLambdaBodies) {
+        this.currentTable = currentTable;
+        this.dispatchedLambdaBodies = dispatchedLambdaBodies;
+    }
 
     private static final Expression Y_COMBINATOR = new Lambda("f",
             new Application(
@@ -31,8 +43,8 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
     private static final String MUTUAL_DISPATCHER_NAME = "<mutual_dispatch>";
     private static final String MUTUAL_DISPATCHER_TAG = "<tag>";
 
-    private Expression generateFunctionBody(FunctionNode function) {
-        var body = function.getBody().accept(this);
+    private Expression generateFunctionBody(FunctionNode function, IRGeneratorVisitor visitor) {
+        var body = function.getBody().accept(visitor);
 
         for (var i = function.getParameters().size() - 1; i >= 0; i--) {
             var param = (IdentifierNode) function.getParameters().get(i);
@@ -44,7 +56,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
     @Override
     public Expression visit(AnonymousFunctionNode anonymousFunctionNode) {
-        return generateFunctionBody(anonymousFunctionNode);
+        return generateFunctionBody(anonymousFunctionNode, this);
     }
 
     @Override
@@ -57,16 +69,20 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
     @Override
     public Expression visit(FunctionDefinitionNode functionDefinitionNode) {
-        var body = generateFunctionBody(functionDefinitionNode);
+        var entry = (BindingEntry) currentTable.lookup(functionDefinitionNode.getName());
 
-        if (functionDefinitionNode.isAppliedMutuallyRecursively()) {
-            dispatchedLambdaBodies.put(functionDefinitionNode.getName(), body);
+        var localIrGenerator = new IRGeneratorVisitor(entry.getLocalTable(), dispatchedLambdaBodies);
+
+        var body = generateFunctionBody(functionDefinitionNode, localIrGenerator);
+
+        if (entry.isAppliedMutuallyRecursively()) {
+            dispatchedLambdaBodies.put(entry.getDispatchId(), body);
 
             return new Application(new Variable(MUTUAL_DISPATCHER_NAME),
                     new IntLiteral(functionDefinitionNode.getDispatchId()));
         }
 
-        if (functionDefinitionNode.isAppliedRecursively()) {
+        if (entry.isAppliedRecursively()) {
             return new Application(Y_COMBINATOR, new Lambda(functionDefinitionNode.getName(), body));
         }
 
@@ -77,10 +93,10 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
     public Expression visit(IdentifierNode identifierNode) {
         var name = identifierNode.getName();
 
-        if (dispatchedLambdaIds.containsKey(name)) {
-            var lambdaId = dispatchedLambdaIds.get(name);
+        var entry = (BindingEntry) currentTable.lookup(name);
 
-            return new Application(new Variable(MUTUAL_DISPATCHER_NAME), new IntLiteral(lambdaId));
+        if (entry != null && entry.isAppliedMutuallyRecursively()) {
+            return new Application(new Variable(MUTUAL_DISPATCHER_NAME), new IntLiteral(entry.getDispatchId()));
         }
 
         return new Variable(name);
@@ -115,10 +131,6 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
     @Override
     public Expression visit(ProgramNode programNode) {
-        var lambdaCollector = new MutuallyRecursiveLambdaCollectorVisitor();
-        programNode.accept(lambdaCollector);
-        dispatchedLambdaIds = lambdaCollector.getLambdaIds();
-
         var functionIRs = new LinkedHashMap<String, Expression>();
         for (var d : programNode.getBindings()) {
             functionIRs.put(d.getName(), d.accept(this));
@@ -131,7 +143,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
         }
 
         // Only add dispatcher when necessary
-        if (dispatchedLambdaIds.isEmpty()) return body;
+        if (dispatchedLambdaBodies.isEmpty()) return body;
 
         Expression dispatcherBody = null;
 
@@ -139,7 +151,7 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
             if (dispatcherBody == null) {
                 dispatcherBody = e.getValue();
             } else {
-                var dispatchId = dispatchedLambdaIds.get(e.getKey());
+                var dispatchId = e.getKey();
 
                 var condition = new Application(
                         new Application(new Variable("=="), new Variable(MUTUAL_DISPATCHER_TAG)),

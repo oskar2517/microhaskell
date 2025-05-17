@@ -2,68 +2,54 @@ package me.oskar.microhaskell.ir;
 
 import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.ast.visitor.BaseVisitor;
+import me.oskar.microhaskell.table.BindingEntry;
+import me.oskar.microhaskell.table.SymbolTable;
 
 import java.util.*;
 
 public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
-    private final Map<String, Set<String>> callGraph = new HashMap<>();
-    private final Map<String, FunctionDefinitionNode> nameToNode = new HashMap<>();
+    private final Map<Integer, Set<Integer>> callGraph;
+    private final Map<Integer, BindingEntry> recursiveBindings;
 
-    private String currentFunctionName = null;
-    private Set<String> currentFunctionCalls = new HashSet<>();
+    private final SymbolTable currentTable;
+    private final Set<Integer> currentFunctionCalls; // nullable, only set during analysis of one function body
+
+    public RecursionAnalyzerVisitor(SymbolTable symbolTable) {
+        this(symbolTable, new HashMap<>(), new HashMap<>(), null);
+    }
+
+    private RecursionAnalyzerVisitor(SymbolTable symbolTable,
+                                     Map<Integer, Set<Integer>> callGraph,
+                                     Map<Integer, BindingEntry> recursiveBindings,
+                                     Set<Integer> currentFunctionCalls) {
+        this.currentTable = symbolTable;
+        this.callGraph = callGraph;
+        this.recursiveBindings = recursiveBindings;
+        this.currentFunctionCalls = currentFunctionCalls;
+    }
 
     @Override
     public Void visit(ProgramNode programNode) {
         for (var binding : programNode.getBindings()) {
-            if (binding instanceof FunctionDefinitionNode fn) {
-                nameToNode.put(fn.getName(), fn);
-                fn.accept(this);
-                callGraph.put(fn.getName(), currentFunctionCalls);
-            }
+            if (!(binding instanceof FunctionDefinitionNode fn)) continue;
+            fn.accept(this);
         }
 
         detectRecursionViaSCC();
-
         return null;
     }
 
     @Override
     public Void visit(FunctionDefinitionNode functionDefinitionNode) {
-        currentFunctionName = functionDefinitionNode.getName();
-        currentFunctionCalls = new HashSet<>();
-        functionDefinitionNode.getBody().accept(this);
+        var entry = (BindingEntry) currentTable.lookup(functionDefinitionNode.getName());
+        recursiveBindings.put(entry.getDispatchId(), entry);
 
-        return null;
-    }
+        var functionApplications = new HashSet<Integer>();
+        var localAnalyzer = new RecursionAnalyzerVisitor(entry.getLocalTable(), callGraph, recursiveBindings, functionApplications);
 
-    @Override
-    public Void visit(FunctionApplicationNode functionApplicationNode) {
-        functionApplicationNode.getFunction().accept(this);
-        functionApplicationNode.getArgument().accept(this);
-
-        return null;
-    }
-
-    @Override
-    public Void visit(IdentifierNode identifierNode) {
-        currentFunctionCalls.add(identifierNode.getName());
-
-        return null;
-    }
-
-    @Override
-    public Void visit(AnonymousFunctionNode anonymousFunctionNode) {
-        anonymousFunctionNode.getBody().accept(this);
-
-        return null;
-    }
-
-    @Override
-    public Void visit(IfNode ifNode) {
-        ifNode.getCondition().accept(this);
-        ifNode.getConsequence().accept(this);
-        ifNode.getAlternative().accept(this);
+        functionDefinitionNode.getBody().accept(localAnalyzer);
+        callGraph.put(entry.getDispatchId(), functionApplications);
 
         return null;
     }
@@ -73,54 +59,99 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
         letNode.getExpression().accept(this);
 
         for (var b : letNode.getBindings()) {
-            nameToNode.put(b.getName(), b);
-            currentFunctionName = b.getName();
-            currentFunctionCalls = new HashSet<>();
-            b.accept(this);
-            callGraph.put(currentFunctionName, currentFunctionCalls);
+            var entry = (BindingEntry) currentTable.lookup(b.getName());
+            callGraph.putIfAbsent(entry.getDispatchId(), new HashSet<>());
+
+            var functionApplications = new HashSet<Integer>();
+            var localAnalyzer = new RecursionAnalyzerVisitor(entry.getLocalTable(), callGraph, recursiveBindings, functionApplications);
+
+            b.getBody().accept(localAnalyzer);
+            callGraph.put(entry.getDispatchId(), functionApplications);
+
+            if (functionApplications.contains(entry.getDispatchId())) {
+                recursiveBindings.put(entry.getDispatchId(), entry);
+            }
         }
 
         return null;
     }
 
 
+    @Override
+    public Void visit(FunctionApplicationNode functionApplicationNode) {
+        functionApplicationNode.getFunction().accept(this);
+        functionApplicationNode.getArgument().accept(this);
+        return null;
+    }
+
+    @Override
+    public Void visit(AnonymousFunctionNode anonymousFunctionNode) {
+        anonymousFunctionNode.getBody().accept(this);
+        return null;
+    }
+
+    @Override
+    public Void visit(IfNode ifNode) {
+        ifNode.getCondition().accept(this);
+        ifNode.getConsequence().accept(this);
+        ifNode.getAlternative().accept(this);
+        return null;
+    }
+
+    @Override
+    public Void visit(IdentifierNode identifierNode) {
+        if (currentFunctionCalls == null) return null; // Top-level or untracked context
+
+        var entry = (BindingEntry) currentTable.lookup(identifierNode.getName());
+        if (entry != null) {
+            currentFunctionCalls.add(entry.getDispatchId());
+        }
+        return null;
+    }
+
     private void detectRecursionViaSCC() {
-        var indexMap = new HashMap<String, Integer>();
-        var lowLinkMap = new HashMap<String, Integer>();
-        var stack = new ArrayDeque<String>();
-        var onStack = new HashSet<String>();
-        var sccs = new ArrayList<Set<String>>();
+        var indexMap = new HashMap<Integer, Integer>();
+        var lowLinkMap = new HashMap<Integer, Integer>();
+        var stack = new ArrayDeque<Integer>();
+        var onStack = new HashSet<Integer>();
+        var sccs = new ArrayList<Set<Integer>>();
 
         var index = new int[]{0};
 
         for (var function : callGraph.keySet()) {
-            if (indexMap.containsKey(function)) continue;
-
-            strongConnect(function, index, indexMap, lowLinkMap, stack, onStack, sccs);
+            if (!indexMap.containsKey(function)) {
+                strongConnect(function, index, indexMap, lowLinkMap, stack, onStack, sccs);
+            }
         }
 
-        for (Set<String> scc : sccs) {
+        for (var scc : sccs) {
             if (scc.size() > 1) {
-                for (String fn : scc) {
-                    nameToNode.get(fn).setAppliedMutuallyRecursively(true);
+                for (var fn : scc) {
+                    var entry = recursiveBindings.get(fn);
+                    if (entry != null) {
+                        entry.setAppliedMutuallyRecursively(true);
+                    }
                 }
             } else {
                 var fn = scc.iterator().next();
                 if (callGraph.getOrDefault(fn, Set.of()).contains(fn)) {
-                    nameToNode.get(fn).setAppliedRecursively(true);
+                    var entry = recursiveBindings.get(fn);
+                    if (entry != null) {
+                        entry.setAppliedRecursively(true);
+                    }
                 }
             }
         }
     }
 
     private void strongConnect(
-            String function,
+            Integer function,
             int[] index,
-            Map<String, Integer> indexMap,
-            Map<String, Integer> lowLinkMap,
-            Deque<String> stack,
-            Set<String> onStack,
-            List<Set<String>> sccs) {
+            Map<Integer, Integer> indexMap,
+            Map<Integer, Integer> lowLinkMap,
+            Deque<Integer> stack,
+            Set<Integer> onStack,
+            List<Set<Integer>> sccs) {
 
         indexMap.put(function, index[0]);
         lowLinkMap.put(function, index[0]);
@@ -138,13 +169,13 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
         }
 
         if (lowLinkMap.get(function).equals(indexMap.get(function))) {
-            var scc = new HashSet<String>();
-            String fn;
+            var scc = new HashSet<Integer>();
+            int fn;
             do {
                 fn = stack.pop();
                 onStack.remove(fn);
                 scc.add(fn);
-            } while (!fn.equals(function));
+            } while (fn != function);
             sccs.add(scc);
         }
     }
