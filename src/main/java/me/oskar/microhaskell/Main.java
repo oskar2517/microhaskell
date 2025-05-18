@@ -41,8 +41,6 @@ public class Main {
         var irGenerator  = new IRGeneratorVisitor(globalSymbolTable);
         var ir = ast.accept(irGenerator);
 
-        System.out.println(globalSymbolTable);
-
         System.out.println(ir);
         System.out.println(ir.evaluate(Builtins.initialEnv()));
     }
