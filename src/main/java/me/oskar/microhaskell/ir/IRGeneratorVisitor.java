@@ -131,15 +131,9 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
     @Override
     public Expression visit(ProgramNode programNode) {
-        var functionIRs = new LinkedHashMap<String, Expression>();
-        for (var d : programNode.getBindings()) {
-            functionIRs.put(d.getName(), d.accept(this));
-        }
-
         Expression body = new Variable("main");
-        for (var name : functionIRs.keySet().stream().toList().reversed()) {
-            var expr = functionIRs.get(name);
-            body = new Application(new Lambda(name, body), expr);
+        for (var binding : programNode.getBindings().reversed()) {
+            body = new Application(new Lambda(binding.getName(), body), binding.accept(this));
         }
 
         // Only add dispatcher when necessary
