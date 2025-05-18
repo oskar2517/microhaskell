@@ -128,18 +128,13 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
         }
 
         for (var scc : sccs) {
-            if (scc.size() > 1) {
-                for (var fn : scc) {
-                    var entry = currentTable.lookupBindingByDispatchId(fn);
-                    if (entry != null) {
+            for (var fn : scc) {
+                var entry = currentTable.lookupBindingByDispatchId(fn);
+                if (entry != null) {
+                    if (scc.size() > 1) {
                         entry.setAppliedMutuallyRecursively(true);
                     }
-                }
-            } else {
-                var fn = scc.iterator().next();
-                if (applicationGraph.getOrDefault(fn, Set.of()).contains(fn)) {
-                    var entry = currentTable.lookupBindingByDispatchId(fn);
-                    if (entry != null) {
+                    if (applicationGraph.getOrDefault(fn, Set.of()).contains(fn)) {
                         entry.setAppliedRecursively(true);
                     }
                 }
