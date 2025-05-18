@@ -1,0 +1,20 @@
+-- abs: computes absolute value
+abs x = if x < 0 then -x else x;
+
+-- mod: computes modulo using abs
+mod a m =
+  let temp = a - m * (a / m) in
+    if temp < 0 then temp + abs m else temp;
+
+-- ping and pong are mutually recursive
+ping n =
+  if n == 0 then 0
+  else if mod n 2 == 0 then ping (n - 2)
+  else pong (n - 1);
+
+pong n =
+  if n == 0 then 1
+  else ping (n - 1);
+
+-- main calls ping with input 10
+main = ping 10;
