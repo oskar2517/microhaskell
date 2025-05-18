@@ -6,22 +6,12 @@ import me.oskar.microhaskell.evaluation.expression.*;
 import me.oskar.microhaskell.table.BindingEntry;
 import me.oskar.microhaskell.table.SymbolTable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
-public class IRGeneratorVisitor implements Visitor<Expression> {
-
-    private final Map<Integer, Expression> dispatchedLambdaBodies;
-
-    private SymbolTable currentTable;
-
-    public IRGeneratorVisitor(SymbolTable currentTable) {
-        this(currentTable, new HashMap<>());
-    }
-
-    private IRGeneratorVisitor(SymbolTable currentTable, Map<Integer, Expression> dispatchedLambdaBodies) {
-        this.currentTable = currentTable;
-        this.dispatchedLambdaBodies = dispatchedLambdaBodies;
-    }
+public class IrGeneratorVisitor implements Visitor<Expression> {
 
     private static final Expression Y_COMBINATOR = new Lambda("f",
             new Application(
@@ -39,11 +29,26 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
                     )
             )
     );
-
     private static final String MUTUAL_DISPATCHER_NAME = "<mutual_dispatch>";
     private static final String MUTUAL_DISPATCHER_TAG = "<tag>";
 
-    private Expression generateFunctionBody(FunctionNode function, IRGeneratorVisitor visitor) {
+    private final SymbolTable symbolTable;
+    private final Set<String> recursionTargets;
+    private final Map<Integer, Expression> dispatchedLambdaBodies;
+
+    public IrGeneratorVisitor(SymbolTable symbolTable) {
+        this(symbolTable, new HashSet<>(), new HashMap<>());
+    }
+
+    public IrGeneratorVisitor(SymbolTable symbolTable,
+                              Set<String> recursionTargets,
+                              Map<Integer, Expression> dispatchedLambdaBodies) {
+        this.symbolTable = symbolTable;
+        this.recursionTargets = recursionTargets;
+        this.dispatchedLambdaBodies = dispatchedLambdaBodies;
+    }
+
+    private Expression generateFunctionBody(FunctionNode function, IrGeneratorVisitor visitor) {
         var body = function.getBody().accept(visitor);
 
         for (var i = function.getParameters().size() - 1; i >= 0; i--) {
@@ -69,11 +74,18 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
     @Override
     public Expression visit(FunctionDefinitionNode functionDefinitionNode) {
-        var entry = (BindingEntry) currentTable.lookup(functionDefinitionNode.getName());
+        var entry = (BindingEntry) symbolTable.lookup(functionDefinitionNode.getName());
 
-        var localIrGenerator = new IRGeneratorVisitor(entry.getLocalTable(), dispatchedLambdaBodies);
+        var localRecursionTargets = recursionTargets;
+        if (entry.isAppliedRecursively() || entry.isAppliedMutuallyRecursively()) {
+            new HashSet<>(recursionTargets);
+            localRecursionTargets.add(functionDefinitionNode.getName());
+        }
 
-        var body = generateFunctionBody(functionDefinitionNode, localIrGenerator);
+        var localIrGeneratorVisitor = new IrGeneratorVisitor(entry.getLocalTable(), localRecursionTargets,
+                dispatchedLambdaBodies);
+
+        var body = generateFunctionBody(functionDefinitionNode, localIrGeneratorVisitor);
 
         if (entry.isAppliedMutuallyRecursively()) {
             dispatchedLambdaBodies.put(entry.getDispatchId(), body);
@@ -91,15 +103,20 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
     @Override
     public Expression visit(IdentifierNode identifierNode) {
-        var name = identifierNode.getName();
+        var entry = symbolTable.lookup(identifierNode.getName());
 
-        var entry = currentTable.lookup(name);
+        if (!(entry instanceof BindingEntry b)) return new Variable(identifierNode.getName());
 
-        if (entry != null && entry instanceof BindingEntry be && be.isAppliedMutuallyRecursively()) {
-            return new Application(new Variable(MUTUAL_DISPATCHER_NAME), new IntLiteral(be.getDispatchId()));
+        if (!recursionTargets.contains(identifierNode.getName())) return b.getNode().accept(this);
+
+        if (b.isAppliedMutuallyRecursively()) {
+            return new Application(
+                    new Variable(MUTUAL_DISPATCHER_NAME),
+                    new IntLiteral(b.getDispatchId())
+            );
         }
 
-        return new Variable(name);
+        return new Variable(identifierNode.getName());
     }
 
 
@@ -116,8 +133,12 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
         return new IntLiteral(intLiteralNode.getValue());
     }
 
-    @Override
     public Expression visit(LetNode letNode) {
+        for (var b : letNode.getBindings()) {
+            var entry = (BindingEntry) symbolTable.lookup(b.getName());
+            entry.setNode(b);
+        }
+
         var bindings = letNode.getBindings();
 
         var body = letNode.getExpression().accept(this);
@@ -131,12 +152,13 @@ public class IRGeneratorVisitor implements Visitor<Expression> {
 
     @Override
     public Expression visit(ProgramNode programNode) {
-        Expression body = new Variable("main");
-        for (var binding : programNode.getBindings().reversed()) {
-            body = new Application(new Lambda(binding.getName(), body), binding.accept(this));
+        for (var b : programNode.getBindings()) {
+            var entry = (BindingEntry) symbolTable.lookup(b.getName());
+            entry.setNode(b);
         }
 
-        // Only add dispatcher when necessary
+        var body = programNode.getBindings().stream().filter(b -> b.getName().equals("main")).findFirst().get().accept(this);
+
         if (dispatchedLambdaBodies.isEmpty()) return body;
 
         Expression dispatcherBody = null;

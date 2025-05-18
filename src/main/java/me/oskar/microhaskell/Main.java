@@ -1,7 +1,7 @@
 package me.oskar.microhaskell;
 
 import me.oskar.microhaskell.evaluation.Builtins;
-import me.oskar.microhaskell.ir.IRGeneratorVisitor;
+import me.oskar.microhaskell.ir.IrGeneratorVisitor;
 import me.oskar.microhaskell.ir.NameAnalyzerVisitor;
 import me.oskar.microhaskell.ir.RecursionAnalyzerVisitor;
 import me.oskar.microhaskell.lexer.Lexer;
@@ -38,7 +38,7 @@ public class Main {
         var recursionAnalyzer = new RecursionAnalyzerVisitor(globalSymbolTable);
         ast.accept(recursionAnalyzer);
 
-        var irGenerator  = new IRGeneratorVisitor(globalSymbolTable);
+        var irGenerator  = new IrGeneratorVisitor(globalSymbolTable);
         var ir = ast.accept(irGenerator);
 
         System.out.println(ir);

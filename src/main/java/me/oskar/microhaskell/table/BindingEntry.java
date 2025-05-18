@@ -1,10 +1,13 @@
 package me.oskar.microhaskell.table;
 
+import me.oskar.microhaskell.ast.FunctionDefinitionNode;
+
 public class BindingEntry implements Entry {
 
     private boolean appliedRecursively = false;
     private boolean appliedMutuallyRecursively = false;
     private final int dispatchId;
+    private FunctionDefinitionNode node;
 
     private final SymbolTable localTable;
 
@@ -35,6 +38,14 @@ public class BindingEntry implements Entry {
 
     public void setAppliedMutuallyRecursively(boolean appliedMutuallyRecursively) {
         this.appliedMutuallyRecursively = appliedMutuallyRecursively;
+    }
+
+    public FunctionDefinitionNode getNode() {
+        return node;
+    }
+
+    public void setNode(FunctionDefinitionNode node) {
+        this.node = node;
     }
 
     @Override
