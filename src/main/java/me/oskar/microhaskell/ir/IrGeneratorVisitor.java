@@ -157,7 +157,11 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
             entry.setNode(b);
         }
 
-        var body = programNode.getBindings().stream().filter(b -> b.getName().equals("main")).findFirst().get().accept(this);
+        var body = programNode.getBindings().stream()
+                .filter(b -> b.getName().equals("main"))
+                .findFirst()
+                .get()
+                .accept(this);
 
         if (dispatchedLambdaBodies.isEmpty()) return body;
 
