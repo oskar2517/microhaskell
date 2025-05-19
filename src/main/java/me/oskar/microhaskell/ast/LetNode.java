@@ -9,6 +9,7 @@ public class LetNode extends ExpressionNode {
 
     private final List<FunctionDefinitionNode> bindings;
     private final ExpressionNode expression;
+    @Node.NoProperty
     private SymbolTable localTable;
 
     public LetNode(List<FunctionDefinitionNode> bindings, ExpressionNode expression) {

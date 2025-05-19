@@ -67,7 +67,16 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(AnonymousFunctionNode anonymousFunctionNode) {
-        anonymousFunctionNode.getBody().accept(this);
+        var localTable = new SymbolTable(currentTable);
+        var localNameAnalyzerVisitor = new NameAnalyzerVisitor(localTable);
+
+        for (var p : anonymousFunctionNode.getParameters()) {
+            localTable.enter(((IdentifierNode) p).getName(), new VariableEntry());
+        }
+
+        anonymousFunctionNode.getBody().accept(localNameAnalyzerVisitor);
+
+        anonymousFunctionNode.setLocalTable(localTable);
 
         return null;
     }

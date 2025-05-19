@@ -3,13 +3,15 @@ package me.oskar.microhaskell.evaluation;
 import me.oskar.microhaskell.evaluation.expression.BuiltinFunction;
 import me.oskar.microhaskell.evaluation.expression.Expression;
 import me.oskar.microhaskell.evaluation.expression.IntLiteral;
+import me.oskar.microhaskell.table.SymbolTable;
+import me.oskar.microhaskell.table.VariableEntry;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class Builtins {
 
-    public static Map<String, Expression> initialEnv() {
+    public static Map<String, Expression> initialEnv(SymbolTable symbolTable) {
         var env = new HashMap<String, Expression>();
 
         env.put("+", BuiltinFunction.of(2, args -> {
@@ -92,6 +94,11 @@ public class Builtins {
                 return alternative.evaluate(env);
             }
         }));
+
+
+        for (var name : env.keySet()) {
+            symbolTable.enter(name, new VariableEntry());
+        }
 
         return env;
     }

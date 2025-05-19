@@ -4,6 +4,7 @@ import me.oskar.microhaskell.evaluation.Builtins;
 import me.oskar.microhaskell.ir.IrGeneratorVisitor;
 import me.oskar.microhaskell.ir.NameAnalyzerVisitor;
 import me.oskar.microhaskell.ir.RecursionAnalyzerVisitor;
+import me.oskar.microhaskell.ir.SemanticAnalyzerVisitor;
 import me.oskar.microhaskell.lexer.Lexer;
 import me.oskar.microhaskell.parser.Parser;
 import me.oskar.microhaskell.table.SymbolTable;
@@ -32,8 +33,13 @@ public class Main {
         var ast = new Parser(lexer).parse();
 
         var globalSymbolTable = new SymbolTable();
+        var env = Builtins.initialEnv(globalSymbolTable);
+
         var nameAnalyzer = new NameAnalyzerVisitor(globalSymbolTable);
         ast.accept(nameAnalyzer);
+
+        var semanticAnalyzer = new SemanticAnalyzerVisitor(globalSymbolTable);
+        ast.accept(semanticAnalyzer);
 
         var recursionAnalyzer = new RecursionAnalyzerVisitor(globalSymbolTable);
         ast.accept(recursionAnalyzer);
@@ -42,6 +48,6 @@ public class Main {
         var ir = ast.accept(irGenerator);
 
         System.out.println(ir);
-        System.out.println(ir.evaluate(Builtins.initialEnv()));
+        System.out.println(ir.evaluate(env));
     }
 }

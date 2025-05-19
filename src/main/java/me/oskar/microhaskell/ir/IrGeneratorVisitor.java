@@ -61,6 +61,13 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
 
     @Override
     public Expression visit(AnonymousFunctionNode anonymousFunctionNode) {
+        if (symbolTable != anonymousFunctionNode.getLocalTable()) {
+            var localIrGeneratorVisitor = new IrGeneratorVisitor(anonymousFunctionNode.getLocalTable(), recursionTargets,
+                    dispatchedLambdaBodies);
+
+            return anonymousFunctionNode.accept(localIrGeneratorVisitor);
+        }
+
         return generateFunctionBody(anonymousFunctionNode, this);
     }
 

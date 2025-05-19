@@ -53,6 +53,10 @@ public class SymbolTable {
         return null;
     }
 
+    public boolean isDefined(String name) {
+        return lookup(name) != null;
+    }
+
     @Override
     public String toString() {
         var sb = new StringBuilder();

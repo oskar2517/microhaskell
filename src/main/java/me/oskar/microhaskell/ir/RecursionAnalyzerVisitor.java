@@ -53,7 +53,8 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
     @Override
     public Void visit(LetNode letNode) {
         if (letNode.getLocalTable() != symbolTable) {
-            var localAnalyzer = new RecursionAnalyzerVisitor(letNode.getLocalTable(), applicationGraph, currentApplications);
+            var localAnalyzer = new RecursionAnalyzerVisitor(letNode.getLocalTable(),
+                    applicationGraph, currentApplications);
             letNode.accept(localAnalyzer);
 
             return null;
@@ -86,6 +87,14 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(AnonymousFunctionNode anonymousFunctionNode) {
+        if (anonymousFunctionNode.getLocalTable() != symbolTable) {
+            var localAnalyzer = new RecursionAnalyzerVisitor(anonymousFunctionNode.getLocalTable(), applicationGraph,
+                    currentApplications);
+            anonymousFunctionNode.accept(localAnalyzer);
+
+            return null;
+        }
+
         anonymousFunctionNode.getBody().accept(this);
 
         return null;
