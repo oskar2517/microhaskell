@@ -13,7 +13,11 @@ public class Lexer {
     }
 
     private boolean isAlphanumeric(char c) {
-        return Character.isLetterOrDigit(c) || c == '_';
+        return Character.isLetterOrDigit(c);
+    }
+
+    private boolean isValidIdentifierChar(char c) {
+        return isAlphanumeric(c) || c == '_' || c == '\'';
     }
 
     private char readChar() {
@@ -31,7 +35,7 @@ public class Lexer {
 
     private String readIdent() {
         var startPosition = position;
-        while (isAlphanumeric(readChar())) {
+        while (isValidIdentifierChar(readChar())) {
             nextChar();
         }
 
@@ -130,7 +134,7 @@ public class Lexer {
             default -> {
                 if (Character.isDigit(currentChar)) {
                     yield new Token(TokenType.INT, readIntegerLiteral());
-                } else if (isAlphanumeric(currentChar)) {
+                } else if (isAlphanumeric(currentChar) || currentChar == '_') {
                     var ident = readIdent();
                     if (Keyword.isKeyword(ident)) {
                         yield new Token(Keyword.resolve(ident), ident);
