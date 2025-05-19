@@ -66,19 +66,6 @@ public class Lexer {
         eatComment();
     }
 
-    public Token peekToken() {
-        var oldPosition = position;
-        var oldCurrentChar = currentChar;
-
-        var token = nextToken();
-
-        position = oldPosition;
-        currentChar = oldCurrentChar;
-
-        return token;
-    }
-
-
     public void printTokens() {
         while (true) {
             var token = nextToken();
