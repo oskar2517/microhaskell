@@ -1,6 +1,7 @@
 package me.oskar.microhaskell.ast;
 
 import me.oskar.microhaskell.ast.visitor.Visitor;
+import me.oskar.microhaskell.table.SymbolTable;
 
 import java.util.List;
 
@@ -8,6 +9,7 @@ public class LetNode extends ExpressionNode {
 
     private final List<FunctionDefinitionNode> bindings;
     private final ExpressionNode expression;
+    private SymbolTable localTable;
 
     public LetNode(List<FunctionDefinitionNode> bindings, ExpressionNode expression) {
         this.bindings = bindings;
@@ -20,6 +22,14 @@ public class LetNode extends ExpressionNode {
 
     public ExpressionNode getExpression() {
         return expression;
+    }
+
+    public SymbolTable getLocalTable() {
+        return localTable;
+    }
+
+    public void setLocalTable(SymbolTable localTable) {
+        this.localTable = localTable;
     }
 
     @Override

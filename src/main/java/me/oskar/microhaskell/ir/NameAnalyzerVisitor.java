@@ -16,7 +16,7 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(FunctionDefinitionNode functionDefinitionNode) {
-        var localTable = new SymbolTable(functionDefinitionNode.getName(), currentTable);
+        var localTable = new SymbolTable(currentTable);
         var localNameAnalyzerVisitor = new NameAnalyzerVisitor(localTable);
 
         for (var p : functionDefinitionNode.getParameters()) {
@@ -43,11 +43,16 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(LetNode letNode) {
+        var localTable = new SymbolTable(currentTable);
+        var localNameAnalyzerVisitor = new NameAnalyzerVisitor(localTable);
+
         for (var b : letNode.getBindings()) {
-            b.accept(this);
+            b.accept(localNameAnalyzerVisitor);
         }
 
-        letNode.getExpression().accept(this);
+        letNode.getExpression().accept(localNameAnalyzerVisitor);
+
+        letNode.setLocalTable(localTable);
 
         return null;
     }

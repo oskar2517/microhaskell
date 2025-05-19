@@ -52,21 +52,22 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(LetNode letNode) {
+        if (letNode.getLocalTable() != currentTable) {
+            var localAnalyzer = new RecursionAnalyzerVisitor(letNode.getLocalTable(), applicationGraph, currentApplications);
+            letNode.accept(localAnalyzer);
+
+            return null;
+        }
+
         letNode.getExpression().accept(this);
 
         for (var b : letNode.getBindings()) {
-            var entry = (BindingEntry) currentTable.lookup(b.getName());
+            var entry = (BindingEntry) letNode.getLocalTable().lookup(b.getName());
             applicationGraph.putIfAbsent(entry.getDispatchId(), new HashSet<>());
         }
 
         for (var b : letNode.getBindings()) {
-            var entry = (BindingEntry) currentTable.lookup(b.getName());
-
-            var functionApplications = new HashSet<Integer>();
-            var localAnalyzer = new RecursionAnalyzerVisitor(entry.getLocalTable(), applicationGraph, functionApplications);
-
-            b.getBody().accept(localAnalyzer);
-            applicationGraph.put(entry.getDispatchId(), functionApplications);
+            b.accept(this);
         }
 
         detectRecursionViaSCC();

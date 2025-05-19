@@ -134,8 +134,15 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
     }
 
     public Expression visit(LetNode letNode) {
+        if (symbolTable != letNode.getLocalTable()) {
+            var localIrGeneratorVisitor = new IrGeneratorVisitor(letNode.getLocalTable(), recursionTargets,
+                    dispatchedLambdaBodies);
+
+            return letNode.accept(localIrGeneratorVisitor);
+        }
+
         for (var b : letNode.getBindings()) {
-            var entry = (BindingEntry) symbolTable.lookup(b.getName());
+            var entry = (BindingEntry) letNode.getLocalTable().lookup(b.getName());
             entry.setNode(b);
         }
 

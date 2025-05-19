@@ -5,18 +5,16 @@ import java.util.Map;
 
 public class SymbolTable {
 
-    private final String name;
     private final SymbolTable parent;
     private final Map<String, Entry> symbols = new HashMap<>();
     private final Map<Integer, BindingEntry> bindings = new HashMap<>();
 
-    public SymbolTable(String name, SymbolTable parent) {
-        this.name = name;
+    public SymbolTable(SymbolTable parent) {
         this.parent = parent;
     }
 
-    public SymbolTable(String name) {
-        this(name, null);
+    public SymbolTable() {
+        this(null);
     }
 
     public void enter(String name, Entry entry) {
@@ -59,7 +57,7 @@ public class SymbolTable {
     public String toString() {
         var sb = new StringBuilder();
 
-        sb.append("SymbolTable %s:%n".formatted(name));
+        sb.append("SymbolTable:%n".formatted());
 
         for (var e : symbols.entrySet()) {
             sb.append("%s -> %s%n".formatted(e.getKey(), e.getValue()));

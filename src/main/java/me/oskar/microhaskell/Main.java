@@ -31,7 +31,7 @@ public class Main {
         var lexer = new Lexer(code);
         var ast = new Parser(lexer).parse();
 
-        var globalSymbolTable = new SymbolTable("<global>");
+        var globalSymbolTable = new SymbolTable();
         var nameAnalyzer = new NameAnalyzerVisitor(globalSymbolTable);
         ast.accept(nameAnalyzer);
 
