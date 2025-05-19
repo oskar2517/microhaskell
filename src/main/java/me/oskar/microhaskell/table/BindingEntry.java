@@ -4,7 +4,7 @@ import me.oskar.microhaskell.ast.FunctionDefinitionNode;
 
 public class BindingEntry implements Entry {
 
-    private boolean appliedRecursively = false;
+    private boolean appliedSelfRecursively = false;
     private boolean appliedMutuallyRecursively = false;
     private final int dispatchId;
     private FunctionDefinitionNode node;
@@ -24,16 +24,16 @@ public class BindingEntry implements Entry {
         return dispatchId;
     }
 
-    public boolean isAppliedRecursively() {
-        return appliedRecursively;
+    public boolean isAppliedSelfRecursively() {
+        return appliedSelfRecursively;
     }
 
     public boolean isAppliedMutuallyRecursively() {
         return appliedMutuallyRecursively;
     }
 
-    public void setAppliedRecursively(boolean appliedRecursively) {
-        this.appliedRecursively = appliedRecursively;
+    public void setAppliedSelfRecursively(boolean appliedSelfRecursively) {
+        this.appliedSelfRecursively = appliedSelfRecursively;
     }
 
     public void setAppliedMutuallyRecursively(boolean appliedMutuallyRecursively) {
@@ -51,6 +51,6 @@ public class BindingEntry implements Entry {
     @Override
     public String toString() {
         return "(Binding dispatchId=%s, appliedRecursively=%s, appliedMutuallyRecursively=%s)"
-                .formatted(dispatchId, appliedRecursively, appliedMutuallyRecursively);
+                .formatted(dispatchId, appliedSelfRecursively, appliedMutuallyRecursively);
     }
 }

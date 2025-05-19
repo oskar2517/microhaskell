@@ -135,7 +135,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
                         entry.setAppliedMutuallyRecursively(true);
                     }
                     if (applicationGraph.getOrDefault(fn, Set.of()).contains(fn)) {
-                        entry.setAppliedRecursively(true);
+                        entry.setAppliedSelfRecursively(true);
                     }
                 }
             }

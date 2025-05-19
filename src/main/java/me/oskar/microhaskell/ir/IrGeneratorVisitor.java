@@ -77,7 +77,7 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
         var entry = (BindingEntry) symbolTable.lookup(functionDefinitionNode.getName());
 
         var localRecursionTargets = recursionTargets;
-        if (entry.isAppliedRecursively() || entry.isAppliedMutuallyRecursively()) {
+        if (entry.isAppliedSelfRecursively() || entry.isAppliedMutuallyRecursively()) {
             new HashSet<>(recursionTargets);
             localRecursionTargets.add(functionDefinitionNode.getName());
         }
@@ -94,7 +94,7 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
                     new IntLiteral(functionDefinitionNode.getDispatchId()));
         }
 
-        if (entry.isAppliedRecursively()) {
+        if (entry.isAppliedSelfRecursively()) {
             return new Application(Y_COMBINATOR, new Lambda(functionDefinitionNode.getName(), body));
         }
 
