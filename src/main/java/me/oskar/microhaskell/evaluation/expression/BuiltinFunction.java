@@ -1,16 +1,17 @@
 package me.oskar.microhaskell.evaluation.expression;
 
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
 public abstract class BuiltinFunction implements Expression {
 
-    protected final List<Expression> partialArguments;
+    protected final List<Thunk> partialArguments;
     protected final int arity;
 
-    protected BuiltinFunction(int arity, List<Expression> partialArguments) {
+    protected BuiltinFunction(int arity, List<Thunk> partialArguments) {
         this.arity = arity;
         this.partialArguments = partialArguments;
     }
@@ -20,10 +21,10 @@ public abstract class BuiltinFunction implements Expression {
         return "<builtin function>";
     }
 
-    abstract Expression applyFully(List<Expression> args);
+    abstract Expression applyFully(List<Thunk> args);
 
-    public Expression apply(List<Expression> newArgs, Map<String, Expression> env) {
-        var combinedArguments = new java.util.ArrayList<>(partialArguments);
+    public Expression apply(List<Thunk> newArgs, Map<String, Expression> env) {
+        var combinedArguments = new ArrayList<>(partialArguments);
         combinedArguments.addAll(newArgs);
 
         if (combinedArguments.size() < arity) {
@@ -35,20 +36,20 @@ public abstract class BuiltinFunction implements Expression {
         }
     }
 
-    public static BuiltinFunction of(int arity, Function<List<Expression>, Expression> op) {
+    public static BuiltinFunction of(int arity, Function<List<Thunk>, Expression> op) {
         return new CurriedBuiltinFunction(arity, List.of(), op);
     }
 
     private static class CurriedBuiltinFunction extends BuiltinFunction {
-        private final Function<List<Expression>, Expression> operation;
+        private final Function<List<Thunk>, Expression> operation;
 
-        public CurriedBuiltinFunction(int arity, List<Expression> argsSoFar, Function<List<Expression>, Expression> op) {
+        public CurriedBuiltinFunction(int arity, List<Thunk> argsSoFar, Function<List<Thunk>, Expression> op) {
             super(arity, argsSoFar);
             this.operation = op;
         }
 
         @Override
-        Expression applyFully(List<Expression> args) {
+        Expression applyFully(List<Thunk> args) {
             return operation.apply(args);
         }
 
