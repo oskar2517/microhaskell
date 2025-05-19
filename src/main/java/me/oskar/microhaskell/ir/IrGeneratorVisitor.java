@@ -143,6 +143,9 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
 
         var body = letNode.getExpression().accept(this);
 
+        // NOTE: Potential optimization: Only generate binding when necessary
+        // Only generate when not applied mutually recursively
+        // ALso check children
         for (var binding : bindings.reversed()) {
             body = new Application(new Lambda(binding.getName(), body), binding.accept(this));
         }
