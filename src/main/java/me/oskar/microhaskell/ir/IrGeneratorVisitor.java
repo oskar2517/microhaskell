@@ -78,7 +78,7 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
 
         var localRecursionTargets = recursionTargets;
         if (entry.isAppliedSelfRecursively() || entry.isAppliedMutuallyRecursively()) {
-            new HashSet<>(recursionTargets);
+            localRecursionTargets = new HashSet<>(recursionTargets);
             localRecursionTargets.add(functionDefinitionNode.getName());
         }
 
