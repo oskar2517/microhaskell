@@ -12,7 +12,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
     private final Map<Integer, Set<Integer>> applicationGraph;
 
     private final SymbolTable symbolTable;
-    private final Set<Integer> currentApplications; // nullable, only set during analysis of one function body
+    private final Set<Integer> currentApplications;
 
     public RecursionAnalyzerVisitor(SymbolTable symbolTable) {
         this(symbolTable, new HashMap<>(), null);
