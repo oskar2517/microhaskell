@@ -11,7 +11,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
     private final Map<Integer, Set<Integer>> applicationGraph;
 
-    private final SymbolTable currentTable;
+    private final SymbolTable symbolTable;
     private final Set<Integer> currentApplications; // nullable, only set during analysis of one function body
 
     public RecursionAnalyzerVisitor(SymbolTable symbolTable) {
@@ -21,7 +21,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
     private RecursionAnalyzerVisitor(SymbolTable symbolTable,
                                      Map<Integer, Set<Integer>> applicationGraph,
                                      Set<Integer> currentApplications) {
-        this.currentTable = symbolTable;
+        this.symbolTable = symbolTable;
         this.applicationGraph = applicationGraph;
         this.currentApplications = currentApplications;
     }
@@ -39,7 +39,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(FunctionDefinitionNode functionDefinitionNode) {
-        var entry = (BindingEntry) currentTable.lookup(functionDefinitionNode.getName());
+        var entry = (BindingEntry) symbolTable.lookup(functionDefinitionNode.getName());
 
         var functionApplications = new HashSet<Integer>();
         var localAnalyzer = new RecursionAnalyzerVisitor(entry.getLocalTable(), applicationGraph, functionApplications);
@@ -52,7 +52,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(LetNode letNode) {
-        if (letNode.getLocalTable() != currentTable) {
+        if (letNode.getLocalTable() != symbolTable) {
             var localAnalyzer = new RecursionAnalyzerVisitor(letNode.getLocalTable(), applicationGraph, currentApplications);
             letNode.accept(localAnalyzer);
 
@@ -104,7 +104,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
     public Void visit(IdentifierNode identifierNode) {
         if (currentApplications == null) return null; // Top-level or untracked context
 
-        var entry = currentTable.lookup(identifierNode.getName());
+        var entry = symbolTable.lookup(identifierNode.getName());
         if (entry instanceof BindingEntry be) {
             currentApplications.add(be.getDispatchId());
         }
@@ -130,7 +130,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
         for (var scc : sccs) {
             for (var fn : scc) {
-                var entry = currentTable.lookupBindingByDispatchId(fn);
+                var entry = symbolTable.lookupBindingByDispatchId(fn);
                 if (entry != null) {
                     if (scc.size() > 1) {
                         entry.setAppliedMutuallyRecursively(true);
