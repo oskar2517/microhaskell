@@ -98,7 +98,13 @@ public class Lexer {
                 yield new Token(TokenType.MINUS, "-");
             }
             case '*' -> new Token(TokenType.ASTERISK, "*");
-            case '/' -> new Token(TokenType.SLASH, "/");
+            case '/' -> {
+                if (readChar() == '=') {
+                    nextChar();
+                    yield new Token(TokenType.NOT_EQUAL, "/=");
+                }
+                yield new Token(TokenType.SLASH, "/");
+            }
             case '\\' -> new Token(TokenType.BACKSLASH, "\\");
             case '=' -> {
                 if (readChar() == '=') {
@@ -106,13 +112,6 @@ public class Lexer {
                     yield new Token(TokenType.EQUAL, "==");
                 }
                 yield new Token(TokenType.DEFINE, "0");
-            }
-            case '!' -> {
-                if (readChar() == '=') {
-                    nextChar();
-                    yield new Token(TokenType.NOT_EQUAL, "!=");
-                }
-                yield new Token(TokenType.ILLEGAL, String.valueOf(currentChar));
             }
             case '<' -> {
                 if (readChar() == '=') {
