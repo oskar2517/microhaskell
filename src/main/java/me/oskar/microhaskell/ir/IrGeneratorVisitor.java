@@ -51,9 +51,8 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
     private Expression generateFunctionBody(FunctionNode function, IrGeneratorVisitor visitor) {
         var body = function.getBody().accept(visitor);
 
-        for (var i = function.getParameters().size() - 1; i >= 0; i--) {
-            var param = (IdentifierNode) function.getParameters().get(i);
-            body = new Lambda(param.getName(), body);
+        for (var p : function.getParameters().reversed()) {
+            body = new Lambda(((IdentifierNode) p).getName(), body);
         }
 
         return body;
@@ -148,20 +147,20 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
             return letNode.accept(localIrGeneratorVisitor);
         }
 
-        for (var b : letNode.getBindings()) {
+        var bindings = letNode.getBindings();
+
+        for (var b : bindings) {
             var entry = (BindingEntry) letNode.getLocalTable().lookup(b.getName());
             entry.setNode(b);
         }
-
-        var bindings = letNode.getBindings();
 
         var body = letNode.getExpression().accept(this);
 
         // NOTE: Potential optimization: Only generate binding when necessary
         // Only generate when not applied mutually recursively
         // ALso check children
-        for (var binding : bindings.reversed()) {
-            body = new Application(new Lambda(binding.getName(), body), binding.accept(this));
+        for (var b : bindings.reversed()) {
+            body = new Application(new Lambda(b.getName(), body), b.accept(this));
         }
 
         return body;
