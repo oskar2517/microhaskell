@@ -49,7 +49,7 @@ public class Builtins {
             return new IntLiteral(arg1.value() == arg2.value() ? 1 : 0);
         }));
 
-        env.put("!=", BuiltinFunction.of(2, args -> {
+        env.put("/=", BuiltinFunction.of(2, args -> {
             var arg1 = (IntLiteral) args.getFirst().evaluate(env);
             var arg2 = (IntLiteral) args.get(1).evaluate(env);
 
