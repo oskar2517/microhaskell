@@ -72,13 +72,9 @@ public class Parser {
         eatToken(TokenType.BACKSLASH);
 
         var parameters = new ArrayList<AtomicExpressionNode>();
-        while (currentToken.type() != TokenType.ARROW && currentToken.type() != TokenType.EOF) {
+        do {
             parameters.add(parseAtomicExpression());
-        }
-
-        if (parameters.isEmpty()) {
-            throw new RuntimeException("An anonymous function expects at least one parameter");
-        }
+        } while (currentToken.type() != TokenType.ARROW && currentToken.type() != TokenType.EOF);
 
         eatToken(TokenType.ARROW);
 
