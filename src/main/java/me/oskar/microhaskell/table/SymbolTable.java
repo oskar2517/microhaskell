@@ -18,6 +18,8 @@ public class SymbolTable {
     }
 
     public void enter(String name, Entry entry) {
+        if (name.equals("_")) return;
+
         if (symbols.containsKey(name)) {
             throw new RuntimeException("Symbol table already contains symbol %s".formatted(name));
         }
