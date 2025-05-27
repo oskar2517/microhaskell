@@ -31,7 +31,7 @@ sum = foldr (+) 0;
 exampleList = cons 1 (cons 2 (cons 3 (cons 4 nil)));
 
 -- Converts a list of digits to the full number
-print xs = foldl (\acc x -> acc * 10 + x) 0 xs;
+print = foldl (\acc x -> acc * 10 + x) 0;
 
 -- 468
 main = print (tail (map (* 2) exampleList));
