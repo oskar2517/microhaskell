@@ -209,7 +209,20 @@ public class Parser {
         return switch (currentToken.type()) {
             case L_PAREN -> {
                 eatToken(TokenType.L_PAREN);
-                final var expression = parseExpression();
+
+                var expression = switch (currentToken.type()) {
+                    case PLUS -> new IdentifierNode(span, eatToken(TokenType.PLUS).lexeme());
+                    case MINUS -> new IdentifierNode(span, eatToken(TokenType.MINUS).lexeme());
+                    case ASTERISK -> new IdentifierNode(span, eatToken(TokenType.ASTERISK).lexeme());
+                    case SLASH -> new IdentifierNode(span, eatToken(TokenType.SLASH).lexeme());
+                    case LESS_THAN -> new IdentifierNode(span, eatToken(TokenType.LESS_THAN).lexeme());
+                    case LESS_THAN_EQUAL -> new IdentifierNode(span, eatToken(TokenType.LESS_THAN_EQUAL).lexeme());
+                    case GREATER_THAN -> new IdentifierNode(span, eatToken(TokenType.GREATER_THAN).lexeme());
+                    case GREATER_THAN_EQUAL ->
+                            new IdentifierNode(span, eatToken(TokenType.GREATER_THAN_EQUAL).lexeme());
+                    default -> parseExpression();
+                };
+
                 eatToken(TokenType.R_PAREN);
 
                 yield expression;
@@ -217,14 +230,6 @@ public class Parser {
             case IF -> parseIf();
             case BACKSLASH -> parseAnonymousFunction();
             case IDENT -> new IdentifierNode(span, eatToken(TokenType.IDENT).lexeme());
-            case PLUS -> new IdentifierNode(span, eatToken(TokenType.PLUS).lexeme());
-            case MINUS -> new IdentifierNode(span, eatToken(TokenType.MINUS).lexeme());
-            case ASTERISK -> new IdentifierNode(span, eatToken(TokenType.ASTERISK).lexeme());
-            case SLASH -> new IdentifierNode(span, eatToken(TokenType.SLASH).lexeme());
-            case LESS_THAN -> new IdentifierNode(span, eatToken(TokenType.LESS_THAN).lexeme());
-            case LESS_THAN_EQUAL -> new IdentifierNode(span, eatToken(TokenType.LESS_THAN_EQUAL).lexeme());
-            case GREATER_THAN -> new IdentifierNode(span, eatToken(TokenType.GREATER_THAN).lexeme());
-            case GREATER_THAN_EQUAL -> new IdentifierNode(span, eatToken(TokenType.GREATER_THAN_EQUAL).lexeme());
             case INT -> new IntLiteralNode(span, Integer.parseInt(eatToken(TokenType.INT).lexeme()));
             default -> {
                 error.unexpectedToken(currentToken, "expression");
