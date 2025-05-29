@@ -1,5 +1,8 @@
 package me.oskar.microhaskell.error;
 
+import me.oskar.microhaskell.ast.AtomicExpressionNode;
+import me.oskar.microhaskell.ast.FunctionDefinitionNode;
+import me.oskar.microhaskell.ast.IdentifierNode;
 import me.oskar.microhaskell.lexer.Token;
 import me.oskar.microhaskell.lexer.TokenType;
 import me.oskar.microhaskell.position.Span;
@@ -79,5 +82,24 @@ public class Error {
             printErrorHead(token.span(), "unexpected token");
             printCode(token.span(), String.format("found `%s`, expected %s", token.type().tokenName, expected));
         }
+    }
+
+    public void useOfUndefinedSymbol(IdentifierNode identifierNode) {
+        printErrorHead(identifierNode.getSpan(), "use of undefined symbol");
+        printCode(identifierNode.getSpan(), "is undefined");
+    }
+
+    public void redefinitionAsParameter(AtomicExpressionNode atomicExpressionNode) {
+        printErrorHead(atomicExpressionNode.getSpan(), "redefinition of symbol as parameter");
+        printCode(atomicExpressionNode.getSpan(), "is already defined on this scope");
+    }
+
+    public void redefinitionAsFunction(FunctionDefinitionNode identifierNode) {
+        printErrorHead(identifierNode.getSpan(), "redefinition of symbol as function");
+        printCode(identifierNode.getSpan(), "is already defined on this scope");
+    }
+
+    public void mainFunctionMissing() {
+        printErrorHead(Span.BASE_SPAN, "main function missing");
     }
 }

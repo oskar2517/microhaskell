@@ -18,10 +18,14 @@ public class SymbolTable {
     }
 
     public void enter(String name, Entry entry) {
+        enter(name, entry, () -> {});
+    }
+
+    public void enter(String name, Entry entry, Runnable error) {
         if (name.equals("_")) return;
 
         if (symbols.containsKey(name)) {
-            throw new RuntimeException("Symbol table already contains symbol %s".formatted(name));
+            error.run();
         }
 
         symbols.put(name, entry);
@@ -41,6 +45,16 @@ public class SymbolTable {
         }
 
         return null;
+    }
+
+    public Entry lookup(String name, Runnable error) {
+        var entry = lookup(name);
+
+        if (entry == null) {
+            error.run();
+        }
+
+        return entry;
     }
 
     public BindingEntry lookupBindingByDispatchId(int dispatchId) {

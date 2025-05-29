@@ -2,7 +2,7 @@ package me.oskar.microhaskell.parser;
 
 import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.error.Error;
-import me.oskar.microhaskell.error.ParsingError;
+import me.oskar.microhaskell.error.CompileTimeError;
 import me.oskar.microhaskell.lexer.Lexer;
 import me.oskar.microhaskell.lexer.Token;
 import me.oskar.microhaskell.lexer.TokenType;
@@ -36,7 +36,7 @@ public class Parser {
 
         error.unexpectedToken(currentToken, "`%s`".formatted(type));
 
-        throw new ParsingError();
+        throw new CompileTimeError();
     }
 
     private boolean matchToken(TokenType type) {
@@ -204,6 +204,8 @@ public class Parser {
     }
 
     private ExpressionNode parseFactor() {
+        var span = currentToken.span();
+
         return switch (currentToken.type()) {
             case L_PAREN -> {
                 eatToken(TokenType.L_PAREN);
@@ -214,7 +216,20 @@ public class Parser {
             }
             case IF -> parseIf();
             case BACKSLASH -> parseAnonymousFunction();
-            default -> parseAtomicExpression();
+            case IDENT -> new IdentifierNode(span, eatToken(TokenType.IDENT).lexeme());
+            case PLUS -> new IdentifierNode(span, eatToken(TokenType.PLUS).lexeme());
+            case MINUS -> new IdentifierNode(span, eatToken(TokenType.MINUS).lexeme());
+            case ASTERISK -> new IdentifierNode(span, eatToken(TokenType.ASTERISK).lexeme());
+            case SLASH -> new IdentifierNode(span, eatToken(TokenType.SLASH).lexeme());
+            case LESS_THAN -> new IdentifierNode(span, eatToken(TokenType.LESS_THAN).lexeme());
+            case LESS_THAN_EQUAL -> new IdentifierNode(span, eatToken(TokenType.LESS_THAN_EQUAL).lexeme());
+            case GREATER_THAN -> new IdentifierNode(span, eatToken(TokenType.GREATER_THAN).lexeme());
+            case GREATER_THAN_EQUAL -> new IdentifierNode(span, eatToken(TokenType.GREATER_THAN_EQUAL).lexeme());
+            case INT -> new IntLiteralNode(span, Integer.parseInt(eatToken(TokenType.INT).lexeme()));
+            default -> {
+                error.unexpectedToken(currentToken, "expression");
+                throw new CompileTimeError();
+            }
         };
     }
 
@@ -233,8 +248,8 @@ public class Parser {
             case GREATER_THAN_EQUAL -> new IdentifierNode(span, eatToken(TokenType.GREATER_THAN_EQUAL).lexeme());
             case INT -> new IntLiteralNode(span, Integer.parseInt(eatToken(TokenType.INT).lexeme()));
             default -> {
-                error.unexpectedToken(currentToken, "expression");
-                throw new ParsingError();
+                error.unexpectedToken(currentToken, "atomic expression");
+                throw new CompileTimeError();
             }
         };
     }

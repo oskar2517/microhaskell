@@ -2,6 +2,8 @@ package me.oskar.microhaskell.ir;
 
 import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.ast.visitor.Visitor;
+import me.oskar.microhaskell.error.CompileTimeError;
+import me.oskar.microhaskell.error.Error;
 import me.oskar.microhaskell.evaluation.expression.*;
 import me.oskar.microhaskell.table.BindingEntry;
 import me.oskar.microhaskell.table.SymbolTable;
@@ -35,17 +37,20 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
     private final SymbolTable symbolTable;
     private final Set<String> recursionTargets;
     private final Map<Integer, Expression> dispatchedLambdaBodies;
+    private final Error error;
 
-    public IrGeneratorVisitor(SymbolTable symbolTable) {
-        this(symbolTable, new HashSet<>(), new HashMap<>());
+    public IrGeneratorVisitor(SymbolTable symbolTable, Error error) {
+        this(symbolTable, new HashSet<>(), new HashMap<>(), error);
     }
 
     public IrGeneratorVisitor(SymbolTable symbolTable,
                               Set<String> recursionTargets,
-                              Map<Integer, Expression> dispatchedLambdaBodies) {
+                              Map<Integer, Expression> dispatchedLambdaBodies,
+                              Error error) {
         this.symbolTable = symbolTable;
         this.recursionTargets = recursionTargets;
         this.dispatchedLambdaBodies = dispatchedLambdaBodies;
+        this.error = error;
     }
 
     private Expression generateFunctionBody(FunctionNode function, IrGeneratorVisitor visitor) {
@@ -62,7 +67,7 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
     public Expression visit(AnonymousFunctionNode anonymousFunctionNode) {
         if (symbolTable != anonymousFunctionNode.getLocalTable()) {
             var localIrGeneratorVisitor = new IrGeneratorVisitor(anonymousFunctionNode.getLocalTable(), recursionTargets,
-                    dispatchedLambdaBodies);
+                    dispatchedLambdaBodies, error);
 
             return anonymousFunctionNode.accept(localIrGeneratorVisitor);
         }
@@ -89,7 +94,7 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
         }
 
         var localIrGeneratorVisitor = new IrGeneratorVisitor(entry.getLocalTable(), localRecursionTargets,
-                dispatchedLambdaBodies);
+                dispatchedLambdaBodies, error);
 
         var body = generateFunctionBody(functionDefinitionNode, localIrGeneratorVisitor);
 
@@ -142,7 +147,7 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
     public Expression visit(LetNode letNode) {
         if (symbolTable != letNode.getLocalTable()) {
             var localIrGeneratorVisitor = new IrGeneratorVisitor(letNode.getLocalTable(), recursionTargets,
-                    dispatchedLambdaBodies);
+                    dispatchedLambdaBodies, error);
 
             return letNode.accept(localIrGeneratorVisitor);
         }
@@ -173,11 +178,16 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
             entry.setNode(b);
         }
 
-        var body = programNode.getBindings().stream()
+        var main = programNode.getBindings().stream()
                 .filter(b -> b.getName().equals("main"))
-                .findFirst()
-                .get()
-                .accept(this);
+                .findFirst();
+
+        if (main.isEmpty()) {
+            error.mainFunctionMissing();
+            throw new CompileTimeError();
+        }
+
+        var body = main.get().accept(this);
 
         if (dispatchedLambdaBodies.isEmpty()) return body;
 

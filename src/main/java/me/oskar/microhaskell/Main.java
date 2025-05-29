@@ -2,7 +2,7 @@ package me.oskar.microhaskell;
 
 import me.oskar.microhaskell.ast.ProgramNode;
 import me.oskar.microhaskell.error.Error;
-import me.oskar.microhaskell.error.ParsingError;
+import me.oskar.microhaskell.error.CompileTimeError;
 import me.oskar.microhaskell.evaluation.Builtins;
 import me.oskar.microhaskell.ir.IrGeneratorVisitor;
 import me.oskar.microhaskell.ir.NameAnalyzerVisitor;
@@ -36,29 +36,29 @@ public class Main {
         var error = new Error(code, filename);
 
         var lexer = new Lexer(code);
-        ProgramNode ast = null;
+
         try {
-            ast = new Parser(lexer, error).parse();
-        } catch (ParsingError e) {
+            var ast = new Parser(lexer, error).parse();
+
+            var globalSymbolTable = new SymbolTable();
+            var env = Builtins.initialEnv(globalSymbolTable);
+
+            var nameAnalyzer = new NameAnalyzerVisitor(globalSymbolTable, error);
+            ast.accept(nameAnalyzer);
+
+            var semanticAnalyzer = new SemanticAnalyzerVisitor(globalSymbolTable, error);
+            ast.accept(semanticAnalyzer);
+
+            var recursionAnalyzer = new RecursionAnalyzerVisitor(globalSymbolTable);
+            ast.accept(recursionAnalyzer);
+
+            var irGenerator  = new IrGeneratorVisitor(globalSymbolTable, error);
+            var ir = ast.accept(irGenerator);
+
+            System.out.println(ir);
+            System.out.println(ir.evaluate(env));
+        } catch (CompileTimeError e) {
             System.exit(1);
         }
-
-        var globalSymbolTable = new SymbolTable();
-        var env = Builtins.initialEnv(globalSymbolTable);
-
-        var nameAnalyzer = new NameAnalyzerVisitor(globalSymbolTable);
-        ast.accept(nameAnalyzer);
-
-        var semanticAnalyzer = new SemanticAnalyzerVisitor(globalSymbolTable);
-        ast.accept(semanticAnalyzer);
-
-        var recursionAnalyzer = new RecursionAnalyzerVisitor(globalSymbolTable);
-        ast.accept(recursionAnalyzer);
-
-        var irGenerator  = new IrGeneratorVisitor(globalSymbolTable);
-        var ir = ast.accept(irGenerator);
-
-        System.out.println(ir);
-        System.out.println(ir.evaluate(env));
     }
 }
