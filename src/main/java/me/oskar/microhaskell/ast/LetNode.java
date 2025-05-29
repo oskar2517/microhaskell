@@ -1,6 +1,7 @@
 package me.oskar.microhaskell.ast;
 
 import me.oskar.microhaskell.ast.visitor.Visitor;
+import me.oskar.microhaskell.position.Span;
 import me.oskar.microhaskell.table.SymbolTable;
 
 import java.util.List;
@@ -12,7 +13,9 @@ public class LetNode extends ExpressionNode {
     @Node.NoProperty
     private SymbolTable localTable;
 
-    public LetNode(List<FunctionDefinitionNode> bindings, ExpressionNode expression) {
+    public LetNode(Span span, List<FunctionDefinitionNode> bindings, ExpressionNode expression) {
+        super(span);
+
         this.bindings = bindings;
         this.expression = expression;
     }

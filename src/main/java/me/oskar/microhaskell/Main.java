@@ -1,5 +1,8 @@
 package me.oskar.microhaskell;
 
+import me.oskar.microhaskell.ast.ProgramNode;
+import me.oskar.microhaskell.error.Error;
+import me.oskar.microhaskell.error.ParsingError;
 import me.oskar.microhaskell.evaluation.Builtins;
 import me.oskar.microhaskell.ir.IrGeneratorVisitor;
 import me.oskar.microhaskell.ir.NameAnalyzerVisitor;
@@ -21,16 +24,24 @@ public class Main {
             System.exit(1);
         }
 
+        var filename = args[0];
         var code = "";
         try {
-            code = Files.readString(Path.of(args[0]));
+            code = Files.readString(Path.of(filename));
         } catch (IOException e) {
-            System.err.printf("Error reading file: %s%n", args[0]);
+            System.err.printf("Error reading file: %s%n", filename);
             System.exit(1);
         }
 
+        var error = new Error(code, filename);
+
         var lexer = new Lexer(code);
-        var ast = new Parser(lexer).parse();
+        ProgramNode ast = null;
+        try {
+            ast = new Parser(lexer, error).parse();
+        } catch (ParsingError e) {
+            System.exit(1);
+        }
 
         var globalSymbolTable = new SymbolTable();
         var env = Builtins.initialEnv(globalSymbolTable);

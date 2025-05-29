@@ -1,19 +1,24 @@
 package me.oskar.microhaskell.parser;
 
 import me.oskar.microhaskell.ast.*;
+import me.oskar.microhaskell.error.Error;
+import me.oskar.microhaskell.error.ParsingError;
 import me.oskar.microhaskell.lexer.Lexer;
 import me.oskar.microhaskell.lexer.Token;
 import me.oskar.microhaskell.lexer.TokenType;
+import me.oskar.microhaskell.position.Span;
 
 import java.util.ArrayList;
 
 public class Parser {
 
     private final Lexer lexer;
+    private final Error error;
     private Token currentToken;
 
-    public Parser(Lexer lexer) {
+    public Parser(Lexer lexer, Error error) {
         this.lexer = lexer;
+        this.error = error;
 
         nextToken();
     }
@@ -29,7 +34,9 @@ public class Parser {
             return t;
         }
 
-        throw new RuntimeException("Unexpected token: %s".formatted(currentToken));
+        error.unexpectedToken(currentToken, "`%s`".formatted(type));
+
+        throw new ParsingError();
     }
 
     private boolean matchToken(TokenType type) {
@@ -43,6 +50,8 @@ public class Parser {
     }
 
     public ProgramNode parse() {
+        var startPosition = currentToken.span().start();
+
         var bindings = new ArrayList<FunctionDefinitionNode>();
 
         while (currentToken.type() != TokenType.EOF) {
@@ -50,10 +59,12 @@ public class Parser {
             eatToken(TokenType.SEMICOLON);
         }
 
-        return new ProgramNode(bindings);
+        return new ProgramNode(new Span(startPosition, currentToken.span().end()), bindings);
     }
 
     private FunctionDefinitionNode parseFunctionDefinition() {
+        var startPosition = currentToken.span().start();
+
         var name = eatToken(TokenType.IDENT).lexeme();
 
         var parameters = new ArrayList<AtomicExpressionNode>();
@@ -65,10 +76,13 @@ public class Parser {
 
         var expression = parseExpression();
 
-        return new FunctionDefinitionNode(name, parameters, expression);
+        return new FunctionDefinitionNode(new Span(startPosition, expression.getSpan().end()), name,
+                parameters, expression);
     }
 
     private AnonymousFunctionNode parseAnonymousFunction() {
+        var startPosition = currentToken.span().start();
+
         eatToken(TokenType.BACKSLASH);
 
         var parameters = new ArrayList<AtomicExpressionNode>();
@@ -80,7 +94,7 @@ public class Parser {
 
         var expression = parseExpression();
 
-        return new AnonymousFunctionNode(parameters, expression);
+        return new AnonymousFunctionNode(new Span(startPosition, expression.getSpan().end()), parameters, expression);
     }
 
     private ExpressionNode parseExpression() {
@@ -91,6 +105,8 @@ public class Parser {
         if (currentToken.type() != TokenType.LET) {
             return parseComparison();
         }
+
+        var startPosition = currentToken.span().start();
 
         eatToken(TokenType.LET);
 
@@ -104,14 +120,14 @@ public class Parser {
 
         var expression = parseExpression();
 
-        return new LetNode(bindings, expression);
+        return new LetNode(new Span(startPosition, expression.getSpan().end()), bindings, expression);
     }
 
     private ExpressionNode parseComparison() {
         var left = parseNumeric();
 
         while (true) {
-            var functionName = new IdentifierNode(currentToken.lexeme());
+            var functionName = new IdentifierNode(currentToken.span(), currentToken.lexeme());
 
             switch (currentToken.type()) {
                 case LESS_THAN:
@@ -126,8 +142,9 @@ public class Parser {
             }
 
             nextToken();
-            final var right = parseNumeric();
-            left = new FunctionApplicationNode(new FunctionApplicationNode(functionName, left), right);
+            var right = parseNumeric();
+            var span = new Span(left.getSpan().end(), right.getSpan().end());
+            left = new FunctionApplicationNode(span, new FunctionApplicationNode(span, functionName, left), right);
         }
     }
 
@@ -135,7 +152,7 @@ public class Parser {
         var left = parseTerm();
 
         while (true) {
-            var functionName = new IdentifierNode(currentToken.lexeme());
+            var functionName = new IdentifierNode(currentToken.span(), currentToken.lexeme());
 
             switch (currentToken.type()) {
                 case PLUS:
@@ -146,8 +163,9 @@ public class Parser {
             }
 
             nextToken();
-            final var right = parseTerm();
-            left = new FunctionApplicationNode(new FunctionApplicationNode(functionName, left), right);
+            var right = parseTerm();
+            var span = new Span(left.getSpan().end(), right.getSpan().end());
+            left = new FunctionApplicationNode(span, new FunctionApplicationNode(span, functionName, left), right);
         }
     }
 
@@ -155,7 +173,7 @@ public class Parser {
         var left = parseApplication();
 
         while (true) {
-            var functionName = new IdentifierNode(currentToken.lexeme());
+            var functionName = new IdentifierNode(currentToken.span(), currentToken.lexeme());
 
             switch (currentToken.type()) {
                 case ASTERISK:
@@ -166,8 +184,9 @@ public class Parser {
             }
 
             nextToken();
-            final var right = parseApplication();
-            left = new FunctionApplicationNode(new FunctionApplicationNode(functionName, left), right);
+            var right = parseApplication();
+            var span = new Span(left.getSpan().end(), right.getSpan().end());
+            left = new FunctionApplicationNode(span, new FunctionApplicationNode(span, functionName, left), right);
         }
     }
 
@@ -177,7 +196,8 @@ public class Parser {
         while (currentToken.type() == TokenType.INT || currentToken.type() == TokenType.IDENT
                 || currentToken.type() == TokenType.L_PAREN) {
             var argument = parseFactor();
-            left = new FunctionApplicationNode(left, argument);
+            left = new FunctionApplicationNode(new Span(left.getSpan().start(), argument.getSpan().end()),
+                    left, argument);
         }
 
         return left;
@@ -199,22 +219,29 @@ public class Parser {
     }
 
     private AtomicExpressionNode parseAtomicExpression() {
+        var span = currentToken.span();
+
         return switch (currentToken.type()) {
-            case IDENT -> new IdentifierNode(eatToken(TokenType.IDENT).lexeme());
-            case PLUS -> new IdentifierNode(eatToken(TokenType.PLUS).lexeme());
-            case MINUS -> new IdentifierNode(eatToken(TokenType.MINUS).lexeme());
-            case ASTERISK -> new IdentifierNode(eatToken(TokenType.ASTERISK).lexeme());
-            case SLASH -> new IdentifierNode(eatToken(TokenType.SLASH).lexeme());
-            case LESS_THAN -> new IdentifierNode(eatToken(TokenType.LESS_THAN).lexeme());
-            case LESS_THAN_EQUAL -> new IdentifierNode(eatToken(TokenType.LESS_THAN_EQUAL).lexeme());
-            case GREATER_THAN -> new IdentifierNode(eatToken(TokenType.GREATER_THAN).lexeme());
-            case GREATER_THAN_EQUAL -> new IdentifierNode(eatToken(TokenType.GREATER_THAN_EQUAL).lexeme());
-            case INT -> new IntLiteralNode(Integer.parseInt(eatToken(TokenType.INT).lexeme()));
-            default -> throw new RuntimeException("Unexpected token: %s".formatted(currentToken));
+            case IDENT -> new IdentifierNode(span, eatToken(TokenType.IDENT).lexeme());
+            case PLUS -> new IdentifierNode(span, eatToken(TokenType.PLUS).lexeme());
+            case MINUS -> new IdentifierNode(span, eatToken(TokenType.MINUS).lexeme());
+            case ASTERISK -> new IdentifierNode(span, eatToken(TokenType.ASTERISK).lexeme());
+            case SLASH -> new IdentifierNode(span, eatToken(TokenType.SLASH).lexeme());
+            case LESS_THAN -> new IdentifierNode(span, eatToken(TokenType.LESS_THAN).lexeme());
+            case LESS_THAN_EQUAL -> new IdentifierNode(span, eatToken(TokenType.LESS_THAN_EQUAL).lexeme());
+            case GREATER_THAN -> new IdentifierNode(span, eatToken(TokenType.GREATER_THAN).lexeme());
+            case GREATER_THAN_EQUAL -> new IdentifierNode(span, eatToken(TokenType.GREATER_THAN_EQUAL).lexeme());
+            case INT -> new IntLiteralNode(span, Integer.parseInt(eatToken(TokenType.INT).lexeme()));
+            default -> {
+                error.unexpectedToken(currentToken, "expression");
+                throw new ParsingError();
+            }
         };
     }
 
     private IfNode parseIf() {
+        var startPosition = currentToken.span().start();
+
         eatToken(TokenType.IF);
         var condition = parseExpression();
         eatToken(TokenType.THEN);
@@ -222,6 +249,6 @@ public class Parser {
         eatToken(TokenType.ELSE);
         var alternative = parseExpression();
 
-        return new IfNode(condition, consequence, alternative);
+        return new IfNode(new Span(startPosition, alternative.getSpan().end()), condition, consequence, alternative);
     }
 }

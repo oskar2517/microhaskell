@@ -1,12 +1,15 @@
 package me.oskar.microhaskell.ast;
 
 import me.oskar.microhaskell.ast.visitor.Visitor;
+import me.oskar.microhaskell.position.Span;
 
 public class IntLiteralNode extends AtomicExpressionNode {
 
     private final int value;
 
-    public IntLiteralNode(int value) {
+    public IntLiteralNode(Span span, int value) {
+        super(span);
+
         this.value = value;
     }
 

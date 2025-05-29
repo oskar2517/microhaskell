@@ -1,6 +1,7 @@
 package me.oskar.microhaskell.ast;
 
 import me.oskar.microhaskell.ast.visitor.Visitor;
+import me.oskar.microhaskell.position.Span;
 
 import java.util.List;
 
@@ -15,7 +16,9 @@ public class FunctionDefinitionNode extends Node implements FunctionNode {
     @Node.NoProperty
     private final int dispatchId = dispatchCounter++;
 
-    public FunctionDefinitionNode(String name, List<AtomicExpressionNode> parameters, ExpressionNode body) {
+    public FunctionDefinitionNode(Span span, String name, List<AtomicExpressionNode> parameters, ExpressionNode body) {
+        super(span);
+
         this.name = name;
         this.parameters = parameters;
         this.body = body;
