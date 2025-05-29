@@ -1,4 +1,6 @@
 package me.oskar.microhaskell.lexer;
 
-public record Token(TokenType type, String lexeme) {
+import me.oskar.microhaskell.position.Span;
+
+public record Token(TokenType type, String lexeme, Span span) {
 }

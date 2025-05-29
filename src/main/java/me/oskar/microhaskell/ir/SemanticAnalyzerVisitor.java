@@ -2,22 +2,27 @@ package me.oskar.microhaskell.ir;
 
 import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.ast.visitor.BaseVisitor;
+import me.oskar.microhaskell.error.CompileTimeError;
+import me.oskar.microhaskell.error.Error;
 import me.oskar.microhaskell.table.BindingEntry;
 import me.oskar.microhaskell.table.SymbolTable;
 
 public class SemanticAnalyzerVisitor extends BaseVisitor<Void> {
 
     private final SymbolTable symbolTable;
+    private final Error error;
 
-    public SemanticAnalyzerVisitor(SymbolTable symbolTable) {
+    public SemanticAnalyzerVisitor(SymbolTable symbolTable, Error error) {
         this.symbolTable = symbolTable;
+        this.error = error;
     }
 
     @Override
     public Void visit(IdentifierNode identifierNode) {
         if (symbolTable.isDefined(identifierNode.getName())) return null;
 
-        throw new RuntimeException("Symbol %s is not defined".formatted(identifierNode.getName()));
+        error.useOfUndefinedSymbol(identifierNode);
+        throw new CompileTimeError();
     }
 
     @Override
@@ -31,7 +36,7 @@ public class SemanticAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(AnonymousFunctionNode anonymousFunctionNode) {
-        var localSemanticAnalyzerVisitor = new SemanticAnalyzerVisitor(anonymousFunctionNode.getLocalTable());
+        var localSemanticAnalyzerVisitor = new SemanticAnalyzerVisitor(anonymousFunctionNode.getLocalTable(), error);
 
         anonymousFunctionNode.getBody().accept(localSemanticAnalyzerVisitor);
 
@@ -42,7 +47,7 @@ public class SemanticAnalyzerVisitor extends BaseVisitor<Void> {
     public Void visit(FunctionDefinitionNode functionDefinitionNode) {
         var entry = (BindingEntry) symbolTable.lookup(functionDefinitionNode.getName());
 
-        var localSemanticAnalyzerVisitor = new SemanticAnalyzerVisitor(entry.getLocalTable());
+        var localSemanticAnalyzerVisitor = new SemanticAnalyzerVisitor(entry.getLocalTable(), error);
 
         functionDefinitionNode.getBody().accept(localSemanticAnalyzerVisitor);
 
@@ -51,7 +56,7 @@ public class SemanticAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(LetNode letNode) {
-        var localSemanticAnalyzerVisitor = new SemanticAnalyzerVisitor(letNode.getLocalTable());
+        var localSemanticAnalyzerVisitor = new SemanticAnalyzerVisitor(letNode.getLocalTable(), error);
 
         for (var b : letNode.getBindings()) {
             b.accept(localSemanticAnalyzerVisitor);

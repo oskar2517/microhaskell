@@ -1,5 +1,8 @@
 package me.oskar.microhaskell;
 
+import me.oskar.microhaskell.ast.ProgramNode;
+import me.oskar.microhaskell.error.Error;
+import me.oskar.microhaskell.error.CompileTimeError;
 import me.oskar.microhaskell.evaluation.Builtins;
 import me.oskar.microhaskell.ir.IrGeneratorVisitor;
 import me.oskar.microhaskell.ir.NameAnalyzerVisitor;
@@ -21,33 +24,41 @@ public class Main {
             System.exit(1);
         }
 
+        var filename = args[0];
         var code = "";
         try {
-            code = Files.readString(Path.of(args[0]));
+            code = Files.readString(Path.of(filename));
         } catch (IOException e) {
-            System.err.printf("Error reading file: %s%n", args[0]);
+            System.err.printf("Error reading file: %s%n", filename);
             System.exit(1);
         }
 
+        var error = new Error(code, filename);
+
         var lexer = new Lexer(code);
-        var ast = new Parser(lexer).parse();
 
-        var globalSymbolTable = new SymbolTable();
-        var env = Builtins.initialEnv(globalSymbolTable);
+        try {
+            var ast = new Parser(lexer, error).parse();
 
-        var nameAnalyzer = new NameAnalyzerVisitor(globalSymbolTable);
-        ast.accept(nameAnalyzer);
+            var globalSymbolTable = new SymbolTable();
+            var env = Builtins.initialEnv(globalSymbolTable);
 
-        var semanticAnalyzer = new SemanticAnalyzerVisitor(globalSymbolTable);
-        ast.accept(semanticAnalyzer);
+            var nameAnalyzer = new NameAnalyzerVisitor(globalSymbolTable, error);
+            ast.accept(nameAnalyzer);
 
-        var recursionAnalyzer = new RecursionAnalyzerVisitor(globalSymbolTable);
-        ast.accept(recursionAnalyzer);
+            var semanticAnalyzer = new SemanticAnalyzerVisitor(globalSymbolTable, error);
+            ast.accept(semanticAnalyzer);
 
-        var irGenerator  = new IrGeneratorVisitor(globalSymbolTable);
-        var ir = ast.accept(irGenerator);
+            var recursionAnalyzer = new RecursionAnalyzerVisitor(globalSymbolTable);
+            ast.accept(recursionAnalyzer);
 
-        System.out.println(ir);
-        System.out.println(ir.evaluate(env));
+            var irGenerator  = new IrGeneratorVisitor(globalSymbolTable, error);
+            var ir = ast.accept(irGenerator);
+
+            System.out.println(ir);
+            System.out.println(ir.evaluate(env));
+        } catch (CompileTimeError e) {
+            System.exit(1);
+        }
     }
 }

@@ -1,6 +1,7 @@
 package me.oskar.microhaskell.ast;
 
 import me.oskar.microhaskell.ast.visitor.Visitor;
+import me.oskar.microhaskell.position.Span;
 
 public class IfNode extends ExpressionNode {
 
@@ -8,7 +9,9 @@ public class IfNode extends ExpressionNode {
     private final ExpressionNode consequence;
     private final ExpressionNode alternative;
 
-    public IfNode(ExpressionNode condition, ExpressionNode consequence, ExpressionNode alternative) {
+    public IfNode(Span span, ExpressionNode condition, ExpressionNode consequence, ExpressionNode alternative) {
+        super(span);
+
         this.condition = condition;
         this.consequence = consequence;
         this.alternative = alternative;

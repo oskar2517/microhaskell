@@ -1,6 +1,7 @@
 package me.oskar.microhaskell.ast;
 
 import me.oskar.microhaskell.ast.visitor.Visitor;
+import me.oskar.microhaskell.position.Span;
 import me.oskar.microhaskell.table.SymbolTable;
 
 import java.util.List;
@@ -12,7 +13,9 @@ public class AnonymousFunctionNode extends ExpressionNode implements FunctionNod
     @Node.NoProperty
     private SymbolTable localTable;
 
-    public AnonymousFunctionNode(List<AtomicExpressionNode> parameters, ExpressionNode body) {
+    public AnonymousFunctionNode(Span span, List<AtomicExpressionNode> parameters, ExpressionNode body) {
+        super(span);
+
         this.parameters = parameters;
         this.body = body;
     }
