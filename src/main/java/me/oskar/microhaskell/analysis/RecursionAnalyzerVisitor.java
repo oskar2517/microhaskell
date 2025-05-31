@@ -1,4 +1,4 @@
-package me.oskar.microhaskell.ir;
+package me.oskar.microhaskell.analysis;
 
 import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.ast.visitor.BaseVisitor;

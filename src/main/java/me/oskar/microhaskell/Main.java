@@ -1,13 +1,12 @@
 package me.oskar.microhaskell;
 
-import me.oskar.microhaskell.ast.ProgramNode;
 import me.oskar.microhaskell.error.Error;
 import me.oskar.microhaskell.error.CompileTimeError;
 import me.oskar.microhaskell.evaluation.Builtins;
 import me.oskar.microhaskell.ir.IrGeneratorVisitor;
-import me.oskar.microhaskell.ir.NameAnalyzerVisitor;
-import me.oskar.microhaskell.ir.RecursionAnalyzerVisitor;
-import me.oskar.microhaskell.ir.SemanticAnalyzerVisitor;
+import me.oskar.microhaskell.analysis.NameAnalyzerVisitor;
+import me.oskar.microhaskell.analysis.RecursionAnalyzerVisitor;
+import me.oskar.microhaskell.analysis.SemanticAnalyzerVisitor;
 import me.oskar.microhaskell.lexer.Lexer;
 import me.oskar.microhaskell.parser.Parser;
 import me.oskar.microhaskell.table.SymbolTable;
