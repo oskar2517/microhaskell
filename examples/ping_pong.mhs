@@ -1,5 +1,5 @@
 -- abs: computes absolute value
-abs x = if x < 0 then -x else x;
+abs x = if x < 0 then (0 - x) else x;
 
 -- mod: computes modulo using abs
 mod a m =
