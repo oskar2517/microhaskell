@@ -50,7 +50,7 @@ public class FunctionEntry implements Entry {
 
     @Override
     public String toString() {
-        return "(Binding dispatchId=%s, appliedRecursively=%s, appliedMutuallyRecursively=%s)"
+        return "(Function dispatchId=%s, appliedRecursively=%s, appliedMutuallyRecursively=%s)"
                 .formatted(dispatchId, appliedSelfRecursively, appliedMutuallyRecursively);
     }
 }
