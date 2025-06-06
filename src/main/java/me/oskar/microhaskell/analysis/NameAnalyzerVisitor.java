@@ -4,7 +4,7 @@ import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.ast.visitor.BaseVisitor;
 import me.oskar.microhaskell.error.CompileTimeError;
 import me.oskar.microhaskell.error.Error;
-import me.oskar.microhaskell.table.BindingEntry;
+import me.oskar.microhaskell.table.FunctionEntry;
 import me.oskar.microhaskell.table.SymbolTable;
 import me.oskar.microhaskell.table.VariableEntry;
 
@@ -32,9 +32,9 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
 
         functionDefinitionNode.getBody().accept(localNameAnalyzerVisitor);
 
-        var bindingEntry = new BindingEntry(localTable, functionDefinitionNode.getDispatchId());
+        var functionEntry = new FunctionEntry(localTable, functionDefinitionNode.getDispatchId());
 
-        currentTable.enter(functionDefinitionNode.getName(), bindingEntry, () -> {
+        currentTable.enter(functionDefinitionNode.getName(), functionEntry, () -> {
             error.redefinitionAsFunction(functionDefinitionNode);
             throw new CompileTimeError();
         });

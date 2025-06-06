@@ -2,7 +2,7 @@ package me.oskar.microhaskell.analysis;
 
 import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.ast.visitor.BaseVisitor;
-import me.oskar.microhaskell.table.BindingEntry;
+import me.oskar.microhaskell.table.FunctionEntry;
 import me.oskar.microhaskell.table.SymbolTable;
 
 import java.util.*;
@@ -39,7 +39,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(FunctionDefinitionNode functionDefinitionNode) {
-        var entry = (BindingEntry) symbolTable.lookup(functionDefinitionNode.getName());
+        var entry = (FunctionEntry) symbolTable.lookup(functionDefinitionNode.getName());
 
         var functionApplications = new HashSet<Integer>();
         var localAnalyzer = new RecursionAnalyzerVisitor(entry.getLocalTable(), applicationGraph, functionApplications);
@@ -63,7 +63,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
         letNode.getExpression().accept(this);
 
         for (var b : letNode.getBindings()) {
-            var entry = (BindingEntry) letNode.getLocalTable().lookup(b.getName());
+            var entry = (FunctionEntry) letNode.getLocalTable().lookup(b.getName());
             applicationGraph.putIfAbsent(entry.getDispatchId(), new HashSet<>());
         }
 
@@ -114,8 +114,8 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
         if (currentApplications == null) return null; // Top-level or untracked context
 
         var entry = symbolTable.lookup(identifierNode.getName());
-        if (entry instanceof BindingEntry be) {
-            currentApplications.add(be.getDispatchId());
+        if (entry instanceof FunctionEntry fe) {
+            currentApplications.add(fe.getDispatchId());
         }
 
         return null;
@@ -139,7 +139,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
         for (var scc : sccs) {
             for (var fn : scc) {
-                var entry = symbolTable.lookupBindingByDispatchId(fn);
+                var entry = symbolTable.lookupFunctionByDispatchId(fn);
                 if (entry != null) {
                     if (scc.size() > 1) {
                         entry.setAppliedMutuallyRecursively(true);

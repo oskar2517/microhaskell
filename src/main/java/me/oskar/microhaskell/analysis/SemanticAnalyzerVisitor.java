@@ -4,7 +4,7 @@ import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.ast.visitor.BaseVisitor;
 import me.oskar.microhaskell.error.CompileTimeError;
 import me.oskar.microhaskell.error.Error;
-import me.oskar.microhaskell.table.BindingEntry;
+import me.oskar.microhaskell.table.FunctionEntry;
 import me.oskar.microhaskell.table.SymbolTable;
 
 public class SemanticAnalyzerVisitor extends BaseVisitor<Void> {
@@ -45,7 +45,7 @@ public class SemanticAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(FunctionDefinitionNode functionDefinitionNode) {
-        var entry = (BindingEntry) symbolTable.lookup(functionDefinitionNode.getName());
+        var entry = (FunctionEntry) symbolTable.lookup(functionDefinitionNode.getName());
 
         var localSemanticAnalyzerVisitor = new SemanticAnalyzerVisitor(entry.getLocalTable(), error);
 

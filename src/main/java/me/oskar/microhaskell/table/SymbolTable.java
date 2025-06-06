@@ -7,7 +7,7 @@ public class SymbolTable {
 
     private final SymbolTable parent;
     private final Map<String, Entry> symbols = new HashMap<>();
-    private final Map<Integer, BindingEntry> bindings = new HashMap<>();
+    private final Map<Integer, FunctionEntry> functions = new HashMap<>();
 
     public SymbolTable(SymbolTable parent) {
         this.parent = parent;
@@ -30,8 +30,8 @@ public class SymbolTable {
 
         symbols.put(name, entry);
 
-        if (entry instanceof BindingEntry be) {
-            bindings.put(be.getDispatchId(), be);
+        if (entry instanceof FunctionEntry fe) {
+            functions.put(fe.getDispatchId(), fe);
         }
     }
 
@@ -57,13 +57,13 @@ public class SymbolTable {
         return entry;
     }
 
-    public BindingEntry lookupBindingByDispatchId(int dispatchId) {
-        if (bindings.containsKey(dispatchId)) {
-            return bindings.get(dispatchId);
+    public FunctionEntry lookupFunctionByDispatchId(int dispatchId) {
+        if (functions.containsKey(dispatchId)) {
+            return functions.get(dispatchId);
         }
 
         if (parent != null) {
-            return parent.lookupBindingByDispatchId(dispatchId);
+            return parent.lookupFunctionByDispatchId(dispatchId);
         }
 
         return null;

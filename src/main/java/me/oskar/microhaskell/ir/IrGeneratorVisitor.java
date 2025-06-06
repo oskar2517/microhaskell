@@ -5,7 +5,7 @@ import me.oskar.microhaskell.ast.visitor.Visitor;
 import me.oskar.microhaskell.error.CompileTimeError;
 import me.oskar.microhaskell.error.Error;
 import me.oskar.microhaskell.evaluation.expression.*;
-import me.oskar.microhaskell.table.BindingEntry;
+import me.oskar.microhaskell.table.FunctionEntry;
 import me.oskar.microhaskell.table.SymbolTable;
 
 import java.util.HashMap;
@@ -85,7 +85,7 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
 
     @Override
     public Expression visit(FunctionDefinitionNode functionDefinitionNode) {
-        var entry = (BindingEntry) symbolTable.lookup(functionDefinitionNode.getName());
+        var entry = (FunctionEntry) symbolTable.lookup(functionDefinitionNode.getName());
 
         var localRecursionTargets = recursionTargets;
         if (entry.isAppliedSelfRecursively() || entry.isAppliedMutuallyRecursively()) {
@@ -116,14 +116,14 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
     public Expression visit(IdentifierNode identifierNode) {
         var entry = symbolTable.lookup(identifierNode.getName());
 
-        if (!(entry instanceof BindingEntry b)) return new Variable(identifierNode.getName());
+        if (!(entry instanceof FunctionEntry fe)) return new Variable(identifierNode.getName());
 
-        if (!recursionTargets.contains(identifierNode.getName())) return b.getNode().accept(this);
+        if (!recursionTargets.contains(identifierNode.getName())) return fe.getNode().accept(this);
 
-        if (b.isAppliedMutuallyRecursively()) {
+        if (fe.isAppliedMutuallyRecursively()) {
             return new Application(
                     new Variable(MUTUAL_DISPATCHER_NAME),
-                    new IntLiteral(b.getDispatchId())
+                    new IntLiteral(fe.getDispatchId())
             );
         }
 
@@ -155,7 +155,7 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
         var bindings = letNode.getBindings();
 
         for (var b : bindings) {
-            var entry = (BindingEntry) letNode.getLocalTable().lookup(b.getName());
+            var entry = (FunctionEntry) letNode.getLocalTable().lookup(b.getName());
             entry.setNode(b);
         }
 
@@ -174,7 +174,7 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
     @Override
     public Expression visit(ProgramNode programNode) {
         for (var b : programNode.getBindings()) {
-            var entry = (BindingEntry) symbolTable.lookup(b.getName());
+            var entry = (FunctionEntry) symbolTable.lookup(b.getName());
             entry.setNode(b);
         }
 

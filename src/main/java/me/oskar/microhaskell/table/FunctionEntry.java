@@ -2,7 +2,7 @@ package me.oskar.microhaskell.table;
 
 import me.oskar.microhaskell.ast.FunctionDefinitionNode;
 
-public class BindingEntry implements Entry {
+public class FunctionEntry implements Entry {
 
     private boolean appliedSelfRecursively = false;
     private boolean appliedMutuallyRecursively = false;
@@ -11,7 +11,7 @@ public class BindingEntry implements Entry {
 
     private final SymbolTable localTable;
 
-    public BindingEntry(SymbolTable localTable, int dispatchId) {
+    public FunctionEntry(SymbolTable localTable, int dispatchId) {
         this.localTable = localTable;
         this.dispatchId = dispatchId;
     }
