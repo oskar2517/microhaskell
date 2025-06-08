@@ -2,7 +2,7 @@ package me.oskar.microhaskell.ast.visitor;
 
 import me.oskar.microhaskell.ast.*;
 
-public class BaseVisitor<T> implements Visitor<T> {
+public abstract class BaseVisitor<T> implements Visitor<T> {
 
     @Override
     public T visit(AnonymousFunctionNode anonymousFunctionNode) {
