@@ -21,8 +21,7 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(FixityNode fixityNode) {
-        var entry = new OperatorEntry(fixityNode.getAssociativity(), fixityNode.getPrecedence(),
-                fixityNode.getOperatorName());
+        var entry = new OperatorEntry(fixityNode.getAssociativity(), fixityNode.getPrecedence());
 
         symbolTable.enterOperator(fixityNode.getOperatorName(), entry, () -> error.duplicatedFixityDeclaration(fixityNode));
 
