@@ -10,6 +10,16 @@ public class BaseVisitor<T> implements Visitor<T> {
     }
 
     @Override
+    public T visit(FixityNode fixityNode) {
+        return null;
+    }
+
+    @Override
+    public T visit(FlatExpressionNode flatExpressionNode) {
+        return null;
+    }
+
+    @Override
     public T visit(FunctionApplicationNode functionApplicationNode) {
         return null;
     }

@@ -8,19 +8,19 @@ import java.util.List;
 
 public class LetNode extends ExpressionNode {
 
-    private final List<FunctionDefinitionNode> bindings;
+    private final List<Node> bindings;
     private final ExpressionNode expression;
     @Node.NoProperty
     private SymbolTable localTable;
 
-    public LetNode(Span span, List<FunctionDefinitionNode> bindings, ExpressionNode expression) {
+    public LetNode(Span span, List<Node> bindings, ExpressionNode expression) {
         super(span);
 
         this.bindings = bindings;
         this.expression = expression;
     }
 
-    public List<FunctionDefinitionNode> getBindings() {
+    public List<Node> getBindings() {
         return bindings;
     }
 

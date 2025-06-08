@@ -1,6 +1,7 @@
 package me.oskar.microhaskell.error;
 
 import me.oskar.microhaskell.ast.AtomicExpressionNode;
+import me.oskar.microhaskell.ast.FixityNode;
 import me.oskar.microhaskell.ast.FunctionDefinitionNode;
 import me.oskar.microhaskell.ast.IdentifierNode;
 import me.oskar.microhaskell.lexer.Token;
@@ -84,6 +85,16 @@ public class Error {
         }
     }
 
+    public void invalidFunctionName(Token token) {
+        printErrorHead(token.span(), "invalid function name");
+        printCode(token.span(), "expected identifier or operator in parenthesis");
+    }
+
+    public void invalidOperatorPrecedence(Token token) {
+        printErrorHead(token.span(), "invalid operator precedence");
+        printCode(token.span(), "has to be an integer between 0 and 9");
+    }
+
     public void useOfUndefinedSymbol(IdentifierNode identifierNode) {
         printErrorHead(identifierNode.getSpan(), "use of undefined symbol");
         printCode(identifierNode.getSpan(), "is undefined");
@@ -97,6 +108,12 @@ public class Error {
     public void redefinitionAsFunction(FunctionDefinitionNode identifierNode) {
         printErrorHead(identifierNode.getSpan(), "redefinition of symbol as function");
         printCode(identifierNode.getSpan(), "is already defined on this scope");
+    }
+
+    public void duplicatedFixityDeclaration(FixityNode fixityNode) {
+        printErrorHead(fixityNode.getSpan(), "duplicated fixity declaration");
+        printCode(fixityNode.getSpan(),
+                "fixity for operator `%s` has already been declared".formatted(fixityNode.getOperatorName()));
     }
 
     public void mainFunctionMissing() {

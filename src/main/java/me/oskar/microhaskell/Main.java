@@ -39,7 +39,9 @@ public class Main {
         try {
             var ast = new Parser(lexer, error).parse();
 
-            var globalSymbolTable = new SymbolTable();
+            System.out.println(ast);
+
+            /* var globalSymbolTable = new SymbolTable();
             var env = Builtins.initialEnv(globalSymbolTable);
 
             var nameAnalyzer = new NameAnalyzerVisitor(globalSymbolTable, error);
@@ -55,7 +57,7 @@ public class Main {
             var ir = ast.accept(irGenerator);
 
             System.out.println(ir);
-            System.out.println(ir.evaluate(env));
+            System.out.println(ir.evaluate(env)); */
         } catch (CompileTimeError e) {
             System.exit(1);
         }

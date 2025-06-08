@@ -7,15 +7,15 @@ import java.util.List;
 
 public class ProgramNode extends Node{
 
-    private final List<FunctionDefinitionNode> bindings;
+    private final List<Node> bindings;
 
-    public ProgramNode(Span span, List<FunctionDefinitionNode> bindings) {
+    public ProgramNode(Span span, List<Node> bindings) {
         super(span);
 
         this.bindings = bindings;
     }
 
-    public List<FunctionDefinitionNode> getBindings() {
+    public List<Node> getBindings() {
         return bindings;
     }
 

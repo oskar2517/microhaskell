@@ -7,6 +7,7 @@ import me.oskar.microhaskell.lexer.Lexer;
 import me.oskar.microhaskell.lexer.Token;
 import me.oskar.microhaskell.lexer.TokenType;
 import me.oskar.microhaskell.position.Span;
+import me.oskar.microhaskell.table.OperatorEntry;
 
 import java.util.ArrayList;
 
@@ -52,20 +53,63 @@ public class Parser {
     public ProgramNode parse() {
         var startPosition = currentToken.span().start();
 
-        var bindings = new ArrayList<FunctionDefinitionNode>();
+        var bindings = new ArrayList<Node>();
 
         while (currentToken.type() != TokenType.EOF) {
-            bindings.add(parseFunctionDefinition());
+            bindings.add(parseBinding());
             eatToken(TokenType.SEMICOLON);
         }
 
         return new ProgramNode(new Span(startPosition, currentToken.span().end()), bindings);
     }
 
+    private Node parseBinding() {
+        if (currentToken.type() == TokenType.INFIX
+                || currentToken.type() == TokenType.INFIX_L
+                || currentToken.type() == TokenType.INFIX_R) {
+            return parseFixity();
+        }
+
+        return parseFunctionDefinition();
+    }
+
+    private FixityNode parseFixity() {
+        var startPosition = currentToken.span().start();
+
+        var associativity = switch (currentToken.type()) {
+            case INFIX -> OperatorEntry.Associativity.NONE;
+            case INFIX_L -> OperatorEntry.Associativity.LEFT;
+            case INFIX_R -> OperatorEntry.Associativity.RIGHT;
+            default -> {
+                error.unexpectedToken(currentToken, "`%s`".formatted(currentToken));
+                yield null;
+            }
+        };
+
+        nextToken();
+
+        var precedence = 0;
+        var precedenceToken = currentToken;
+        try {
+            precedence = Integer.parseInt(eatToken(TokenType.INT).lexeme());
+            if (precedence < 0 || precedence > 9) {
+                error.invalidOperatorPrecedence(precedenceToken);
+            }
+        } catch (NumberFormatException e) {
+            error.invalidOperatorPrecedence(precedenceToken);
+        }
+
+        var operatorToken = currentToken;
+        var operatorName = eatToken(TokenType.OPERATOR).lexeme();
+
+        return new FixityNode(new Span(startPosition, operatorToken.span().end()),
+                associativity, precedence, operatorName);
+    }
+
     private FunctionDefinitionNode parseFunctionDefinition() {
         var startPosition = currentToken.span().start();
 
-        var name = eatToken(TokenType.IDENT).lexeme();
+        var name = parseFunctionName();
 
         var parameters = new ArrayList<AtomicExpressionNode>();
         while (currentToken.type() != TokenType.DEFINE && currentToken.type() != TokenType.EOF) {
@@ -78,6 +122,23 @@ public class Parser {
 
         return new FunctionDefinitionNode(new Span(startPosition, expression.getSpan().end()), name,
                 parameters, expression);
+    }
+
+    private String parseFunctionName() {
+        if (currentToken.type() == TokenType.IDENT) {
+            return eatToken(TokenType.IDENT).lexeme();
+        }
+
+        if (currentToken.type() == TokenType.L_PAREN) {
+            eatToken(TokenType.L_PAREN);
+            var name = eatToken(TokenType.OPERATOR).lexeme();
+            eatToken(TokenType.R_PAREN);
+
+            return name;
+        }
+
+        error.invalidFunctionName(currentToken);
+        throw new CompileTimeError();
     }
 
     private AnonymousFunctionNode parseAnonymousFunction() {
@@ -98,22 +159,35 @@ public class Parser {
     }
 
     private ExpressionNode parseExpression() {
-        return parseLet();
-    }
-
-    private ExpressionNode parseLet() {
-        if (currentToken.type() != TokenType.LET) {
-            return parseComparison();
+        if (currentToken.type() == TokenType.LET) {
+            return parseLet();
         }
 
         var startPosition = currentToken.span().start();
 
+        var elements = new ArrayList<FlatExpressionElement>();
+
+        var lastElement = parseApplication();
+        elements.add(lastElement);
+
+        while (currentToken.type() == TokenType.OPERATOR) {
+            elements.add(new FlatExpressionNode.Operator(eatToken(TokenType.OPERATOR).lexeme()));
+            lastElement = parseApplication();
+            elements.add(lastElement);
+        }
+
+        return new FlatExpressionNode(new Span(startPosition, lastElement.getSpan().end()), elements);
+    }
+
+    private ExpressionNode parseLet() {
+        var startPosition = currentToken.span().start();
+
         eatToken(TokenType.LET);
 
-        var bindings = new ArrayList<FunctionDefinitionNode>();
+        var bindings = new ArrayList<Node>();
 
         do {
-            bindings.add(parseFunctionDefinition());
+            bindings.add(parseBinding());
         } while (matchToken(TokenType.SEMICOLON));
 
         eatToken(TokenType.IN);
@@ -121,73 +195,6 @@ public class Parser {
         var expression = parseExpression();
 
         return new LetNode(new Span(startPosition, expression.getSpan().end()), bindings, expression);
-    }
-
-    private ExpressionNode parseComparison() {
-        var left = parseNumeric();
-
-        while (true) {
-            var functionName = new IdentifierNode(currentToken.span(), currentToken.lexeme());
-
-            switch (currentToken.type()) {
-                case LESS_THAN:
-                case LESS_THAN_EQUAL:
-                case GREATER_THAN:
-                case GREATER_THAN_EQUAL:
-                case EQUAL:
-                case NOT_EQUAL:
-                    break;
-                default:
-                    return left;
-            }
-
-            nextToken();
-            var right = parseNumeric();
-            var span = new Span(left.getSpan().end(), right.getSpan().end());
-            left = new FunctionApplicationNode(span, new FunctionApplicationNode(span, functionName, left), right);
-        }
-    }
-
-    private ExpressionNode parseNumeric() {
-        var left = parseTerm();
-
-        while (true) {
-            var functionName = new IdentifierNode(currentToken.span(), currentToken.lexeme());
-
-            switch (currentToken.type()) {
-                case PLUS:
-                case MINUS:
-                    break;
-                default:
-                    return left;
-            }
-
-            nextToken();
-            var right = parseTerm();
-            var span = new Span(left.getSpan().end(), right.getSpan().end());
-            left = new FunctionApplicationNode(span, new FunctionApplicationNode(span, functionName, left), right);
-        }
-    }
-
-    private ExpressionNode parseTerm() {
-        var left = parseApplication();
-
-        while (true) {
-            var functionName = new IdentifierNode(currentToken.span(), currentToken.lexeme());
-
-            switch (currentToken.type()) {
-                case ASTERISK:
-                case SLASH:
-                    break;
-                default:
-                    return left;
-            }
-
-            nextToken();
-            var right = parseApplication();
-            var span = new Span(left.getSpan().end(), right.getSpan().end());
-            left = new FunctionApplicationNode(span, new FunctionApplicationNode(span, functionName, left), right);
-        }
     }
 
     private ExpressionNode parseApplication() {
@@ -210,18 +217,12 @@ public class Parser {
             case L_PAREN -> {
                 eatToken(TokenType.L_PAREN);
 
-                var expression = switch (currentToken.type()) {
-                    case PLUS -> new IdentifierNode(span, eatToken(TokenType.PLUS).lexeme());
-                    case MINUS -> new IdentifierNode(span, eatToken(TokenType.MINUS).lexeme());
-                    case ASTERISK -> new IdentifierNode(span, eatToken(TokenType.ASTERISK).lexeme());
-                    case SLASH -> new IdentifierNode(span, eatToken(TokenType.SLASH).lexeme());
-                    case LESS_THAN -> new IdentifierNode(span, eatToken(TokenType.LESS_THAN).lexeme());
-                    case LESS_THAN_EQUAL -> new IdentifierNode(span, eatToken(TokenType.LESS_THAN_EQUAL).lexeme());
-                    case GREATER_THAN -> new IdentifierNode(span, eatToken(TokenType.GREATER_THAN).lexeme());
-                    case GREATER_THAN_EQUAL ->
-                            new IdentifierNode(span, eatToken(TokenType.GREATER_THAN_EQUAL).lexeme());
-                    default -> parseExpression();
-                };
+                ExpressionNode expression;
+                if (currentToken.type() == TokenType.OPERATOR) {
+                    expression = new IdentifierNode(span, eatToken(TokenType.OPERATOR).lexeme());
+                } else {
+                    expression = parseExpression();
+                }
 
                 eatToken(TokenType.R_PAREN);
 

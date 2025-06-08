@@ -1,7 +1,7 @@
 package me.oskar.microhaskell.ir;
 
 import me.oskar.microhaskell.ast.*;
-import me.oskar.microhaskell.ast.visitor.Visitor;
+import me.oskar.microhaskell.ast.visitor.BaseVisitor;
 import me.oskar.microhaskell.error.CompileTimeError;
 import me.oskar.microhaskell.error.Error;
 import me.oskar.microhaskell.evaluation.expression.*;
@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class IrGeneratorVisitor implements Visitor<Expression> {
+public  class IrGeneratorVisitor extends BaseVisitor<Expression> {
 
     private static final Expression Y_COMBINATOR = new Lambda("f",
             new Application(
@@ -155,8 +155,10 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
         var bindings = letNode.getBindings();
 
         for (var b : bindings) {
-            var entry = (FunctionEntry) letNode.getLocalTable().lookup(b.getName());
-            entry.setNode(b);
+            if (!(b instanceof FunctionDefinitionNode fd)) continue;
+
+            var entry = (FunctionEntry) letNode.getLocalTable().lookup(fd.getName());
+            entry.setNode(fd);
         }
 
         var body = letNode.getExpression().accept(this);
@@ -165,7 +167,9 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
         // Only generate when not applied mutually recursively
         // ALso check children
         for (var b : bindings.reversed()) {
-            body = new Application(new Lambda(b.getName(), body), b.accept(this));
+            if (!(b instanceof FunctionDefinitionNode fd)) continue;
+
+            body = new Application(new Lambda(fd.getName(), body), b.accept(this));
         }
 
         return body;
@@ -174,12 +178,15 @@ public class IrGeneratorVisitor implements Visitor<Expression> {
     @Override
     public Expression visit(ProgramNode programNode) {
         for (var b : programNode.getBindings()) {
-            var entry = (FunctionEntry) symbolTable.lookup(b.getName());
-            entry.setNode(b);
+            if (!(b instanceof FunctionDefinitionNode fd)) continue;
+
+            var entry = (FunctionEntry) symbolTable.lookup(fd.getName());
+            entry.setNode(fd);
         }
 
         var main = programNode.getBindings().stream()
-                .filter(b -> b.getName().equals("main"))
+                .filter(e -> e instanceof FunctionDefinitionNode)
+                .filter(b -> ((FunctionDefinitionNode) b).getName().equals("main"))
                 .findFirst();
 
         if (main.isEmpty()) {
