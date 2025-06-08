@@ -99,8 +99,6 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(AnonymousFunctionNode anonymousFunctionNode) {
-        System.out.println("Okk");
-
         var localTable = new SymbolTable(symbolTable);
         var localNameAnalyzerVisitor = new NameAnalyzerVisitor(localTable, error);
 

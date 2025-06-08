@@ -77,7 +77,6 @@ public class SemanticAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(ProgramNode programNode) {
-        System.out.println(programNode.getBindings());
         for (var b : programNode.getBindings()) {
             b.accept(this);
         }
