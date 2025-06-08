@@ -12,7 +12,7 @@ public class ExpressionRewriterVisitor extends AstRewriterVisitor {
 
     private record OperatorInfo(String name, int precedence, OperatorEntry.Associativity associativity) {
     }
-    
+
     public ExpressionRewriterVisitor(SymbolTable symbolTable) {
         super(symbolTable);
     }
