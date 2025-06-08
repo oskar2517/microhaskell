@@ -12,7 +12,7 @@ public class ExpressionRewriterVisitor extends AstRewriterVisitor {
 
     private record OperatorInfo(String name, int precedence, OperatorEntry.Associativity associativity) {
     }
-
+    
     public ExpressionRewriterVisitor(SymbolTable symbolTable) {
         super(symbolTable);
     }
@@ -61,7 +61,12 @@ public class ExpressionRewriterVisitor extends AstRewriterVisitor {
         if (op1.precedence() > op2.precedence()) return true;
         if (op1.precedence() < op2.precedence()) return false;
 
-        return op1.associativity() == OperatorEntry.Associativity.LEFT;
+        var assoc = op1.associativity();
+        if (assoc == OperatorEntry.Associativity.NONE) {
+            throw new IllegalStateException("Operator has no associativity: %s".formatted(op1.name));
+        }
+
+        return assoc == OperatorEntry.Associativity.LEFT;
     }
 
     private void reduce(Deque<Node> operandStack, OperatorInfo opEntry) {
