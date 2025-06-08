@@ -74,8 +74,9 @@ public class ExpressionRewriterVisitor extends AstRewriterVisitor {
         var left = (ExpressionNode) operandStack.pop();
 
         var operator = new IdentifierNode(Span.BASE_SPAN, opEntry.name());
-        var leftApplication = new FunctionApplicationNode(Span.BASE_SPAN, operator, left);
-        var fullApplication = new FunctionApplicationNode(Span.BASE_SPAN, leftApplication, right);
+        var leftApplication = new FunctionApplicationNode(left.getSpan(), operator, left);
+        var fullApplication = new FunctionApplicationNode(new Span(left.getSpan().start(), right.getSpan().end()),
+                leftApplication, right);
 
         operandStack.push(fullApplication);
     }
