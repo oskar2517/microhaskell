@@ -7,6 +7,7 @@ public class SymbolTable {
 
     private final SymbolTable parent;
     private final Map<String, Entry> symbols = new HashMap<>();
+    private final Map<String, OperatorEntry> operators = new HashMap<>();
     private final Map<Integer, FunctionEntry> functions = new HashMap<>();
 
     public SymbolTable(SymbolTable parent) {
@@ -15,6 +16,30 @@ public class SymbolTable {
 
     public SymbolTable() {
         this(null);
+    }
+
+    public void enterOperator(String name, OperatorEntry entry, Runnable error) {
+        if (operators.containsKey(name)) {
+            error.run();
+        }
+
+        operators.put(name, entry);
+    }
+
+    public void enterOperator(String name, OperatorEntry entry) {
+        enterOperator(name, entry, () -> {});
+    }
+
+    public OperatorEntry lookupOperator(String name) {
+        if (operators.containsKey(name)) {
+            return operators.get(name);
+        }
+
+        if (parent != null) {
+            return parent.lookupOperator(name);
+        }
+
+        return new OperatorEntry(OperatorEntry.Associativity.LEFT, 9);
     }
 
     public void enter(String name, Entry entry) {

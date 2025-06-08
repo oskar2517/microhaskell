@@ -5,22 +5,43 @@ import me.oskar.microhaskell.ast.visitor.BaseVisitor;
 import me.oskar.microhaskell.error.CompileTimeError;
 import me.oskar.microhaskell.error.Error;
 import me.oskar.microhaskell.table.FunctionEntry;
+import me.oskar.microhaskell.table.OperatorEntry;
 import me.oskar.microhaskell.table.SymbolTable;
 import me.oskar.microhaskell.table.VariableEntry;
 
 public class NameAnalyzerVisitor extends BaseVisitor<Void> {
 
-    private final SymbolTable currentTable;
+    private final SymbolTable symbolTable;
     private final Error error;
 
-    public NameAnalyzerVisitor(SymbolTable currentTable, Error error) {
-        this.currentTable = currentTable;
+    public NameAnalyzerVisitor(SymbolTable symbolTable, Error error) {
+        this.symbolTable = symbolTable;
         this.error = error;
     }
 
     @Override
+    public Void visit(FixityNode fixityNode) {
+        var entry = new OperatorEntry(fixityNode.getAssociativity(), fixityNode.getPrecedence());
+
+        symbolTable.enterOperator(fixityNode.getOperatorName(), entry, () -> error.duplicatedFixityDeclaration(fixityNode));
+
+        return null;
+    }
+
+    @Override
+    public Void visit(FlatExpressionNode flatExpressionNode) {
+        for (var e : flatExpressionNode.getElements()) {
+            if (!(e instanceof Node n)) continue;
+
+            n.accept(this);
+        }
+
+        return null;
+    }
+
+    @Override
     public Void visit(FunctionDefinitionNode functionDefinitionNode) {
-        var localTable = new SymbolTable(currentTable);
+        var localTable = new SymbolTable(symbolTable);
         var localNameAnalyzerVisitor = new NameAnalyzerVisitor(localTable, error);
 
         for (var p : functionDefinitionNode.getParameters()) {
@@ -34,7 +55,7 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
 
         var functionEntry = new FunctionEntry(localTable, functionDefinitionNode.getDispatchId());
 
-        currentTable.enter(functionDefinitionNode.getName(), functionEntry, () -> {
+        symbolTable.enter(functionDefinitionNode.getName(), functionEntry, () -> {
             error.redefinitionAsFunction(functionDefinitionNode);
             throw new CompileTimeError();
         });
@@ -53,7 +74,7 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(LetNode letNode) {
-        var localTable = new SymbolTable(currentTable);
+        var localTable = new SymbolTable(symbolTable);
         var localNameAnalyzerVisitor = new NameAnalyzerVisitor(localTable, error);
 
         for (var b : letNode.getBindings()) {
@@ -77,7 +98,7 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(AnonymousFunctionNode anonymousFunctionNode) {
-        var localTable = new SymbolTable(currentTable);
+        var localTable = new SymbolTable(symbolTable);
         var localNameAnalyzerVisitor = new NameAnalyzerVisitor(localTable, error);
 
         for (var p : anonymousFunctionNode.getParameters()) {

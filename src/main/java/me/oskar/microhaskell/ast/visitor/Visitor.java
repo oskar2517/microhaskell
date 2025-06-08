@@ -6,6 +6,10 @@ public interface Visitor<T> {
 
     T visit(AnonymousFunctionNode anonymousFunctionNode);
 
+    T visit(FixityNode fixityNode);
+
+    T visit(FlatExpressionNode flatExpressionNode);
+
     T visit(FunctionApplicationNode functionApplicationNode);
 
     T visit(FunctionDefinitionNode functionDefinitionNode);

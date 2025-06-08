@@ -63,7 +63,9 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
         letNode.getExpression().accept(this);
 
         for (var b : letNode.getBindings()) {
-            var entry = (FunctionEntry) letNode.getLocalTable().lookup(b.getName());
+            if (!(b instanceof FunctionDefinitionNode fd)) continue;
+
+            var entry = (FunctionEntry) letNode.getLocalTable().lookup(fd.getName());
             applicationGraph.putIfAbsent(entry.getDispatchId(), new HashSet<>());
         }
 

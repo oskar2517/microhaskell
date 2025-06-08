@@ -25,6 +25,10 @@ public class Lexer {
         return isAlphanumeric(c) || c == '_' || c == '\'';
     }
 
+    private boolean isValidOperatorChar(char c) {
+        return "!#$%&*+./<=>?@\\\\^|-~:".indexOf(c) >= 0;
+    }
+
     private char readChar() {
         if (position < code.length()) {
             return code.charAt(position);
@@ -51,6 +55,15 @@ public class Lexer {
     private String readIdent() {
         var startPosition = position;
         while (isValidIdentifierChar(readChar())) {
+            nextChar();
+        }
+
+        return code.substring(startPosition - 1, position);
+    }
+
+    private String readOperator() {
+        var startPosition = position;
+        while (isValidOperatorChar(readChar())) {
             nextChar();
         }
 
@@ -111,61 +124,41 @@ public class Lexer {
             case ';' -> new Token(TokenType.SEMICOLON, ";", span(startPosition, 1));
             case '(' -> new Token(TokenType.L_PAREN, "(", span(startPosition, 1));
             case ')' -> new Token(TokenType.R_PAREN, ")", span(startPosition, 1));
-            case '+' -> new Token(TokenType.PLUS, "+", span(startPosition, 1));
-            case '-' -> {
-                if (readChar() == '>') {
-                    nextChar();
-                    yield new Token(TokenType.ARROW, "->", span(startPosition, 2));
-                }
-                yield new Token(TokenType.MINUS, "-", span(startPosition, 1));
-            }
-            case '*' -> new Token(TokenType.ASTERISK, "*", span(startPosition, 1));
-            case '/' -> {
-                if (readChar() == '=') {
-                    nextChar();
-                    yield new Token(TokenType.NOT_EQUAL, "/=", span(startPosition, 2));
-                }
-                yield new Token(TokenType.SLASH, "/", span(startPosition, 1));
-            }
-            case '\\' -> new Token(TokenType.BACKSLASH, "\\", span(startPosition, 1));
-            case '=' -> {
-                if (readChar() == '=') {
-                    nextChar();
-                    yield new Token(TokenType.EQUAL, "==", span(startPosition, 2));
-                }
-                yield new Token(TokenType.DEFINE, "0", span(startPosition, 1));
-            }
-            case '<' -> {
-                if (readChar() == '=') {
-                    nextChar();
-                    yield new Token(TokenType.LESS_THAN_EQUAL, "<=", span(startPosition, 2));
-                } else {
-                    yield new Token(TokenType.LESS_THAN, "<", span(startPosition, 1));
-                }
-            }
-            case '>' -> {
-                if (readChar() == '=') {
-                    nextChar();
-                    yield new Token(TokenType.GREATER_THAN_EQUAL, ">=", span(startPosition, 2));
-                } else {
-                    yield new Token(TokenType.GREATER_THAN, ">", span(startPosition, 1));
-                }
-            }
             case EOF -> new Token(TokenType.EOF, String.valueOf(EOF), span(startPosition, 1));
             default -> {
                 if (Character.isDigit(currentChar)) {
                     var literal = readIntegerLiteral();
                     yield new Token(TokenType.INT, literal, span(startPosition, literal.length()));
-                } else if (isAlphanumeric(currentChar) || currentChar == '_') {
+                }
+
+                if (isAlphanumeric(currentChar) || currentChar == '_') {
                     var ident = readIdent();
                     if (Keyword.isKeyword(ident)) {
                         yield new Token(Keyword.resolve(ident), ident, span(startPosition, ident.length()));
                     } else {
                         yield new Token(TokenType.IDENT, ident, span(startPosition, ident.length()));
                     }
-                } else {
-                    yield new Token(TokenType.ILLEGAL, String.valueOf(currentChar), span(startPosition, 1));
                 }
+
+                if (currentChar == '-' && readChar() == '>') {
+                    nextChar();
+                    yield new Token(TokenType.ARROW, "->", span(startPosition, 2));
+                }
+
+                if (currentChar == '=' && !isValidOperatorChar(readChar())) {
+                    yield new Token(TokenType.DEFINE, "=", span(startPosition, 1));
+                }
+
+                if (currentChar == '\\' && !isValidOperatorChar(readChar())) {
+                    yield new Token(TokenType.BACKSLASH, "\\", span(startPosition, 1));
+                }
+
+                if (isValidOperatorChar(currentChar)) {
+                    var operator = readOperator();
+                    yield new Token(TokenType.OPERATOR, operator, span(startPosition, operator.length()));
+                }
+
+                yield new Token(TokenType.ILLEGAL, String.valueOf(currentChar), span(startPosition, 1));
             }
         };
     }

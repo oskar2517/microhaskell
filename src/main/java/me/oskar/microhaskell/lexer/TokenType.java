@@ -3,7 +3,12 @@ package me.oskar.microhaskell.lexer;
 public enum TokenType {
 
     IDENT("identifier"),
+    OPERATOR("operator"),
     INT("integer"),
+
+    INFIX("infix"),
+    INFIX_L("infixl"),
+    INFIX_R("infixr"),
 
     IF("if"),
     THEN("then"),
@@ -13,17 +18,6 @@ public enum TokenType {
 
     L_PAREN("("),
     R_PAREN(")"),
-
-    EQUAL("=="),
-    NOT_EQUAL("!="),
-    LESS_THAN("<"),
-    LESS_THAN_EQUAL("<="),
-    GREATER_THAN(">"),
-    GREATER_THAN_EQUAL(">="),
-    PLUS("+"),
-    MINUS("-"),
-    ASTERISK("*"),
-    SLASH("/"),
 
     BACKSLASH("\\"),
     ARROW("->"),
