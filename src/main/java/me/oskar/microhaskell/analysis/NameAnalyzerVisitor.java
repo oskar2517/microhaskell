@@ -23,7 +23,10 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
     public Void visit(FixityNode fixityNode) {
         var entry = new OperatorEntry(fixityNode.getAssociativity(), fixityNode.getPrecedence());
 
-        symbolTable.enterOperator(fixityNode.getOperatorName(), entry, () -> error.duplicatedFixityDeclaration(fixityNode));
+        symbolTable.enterOperator(fixityNode.getOperatorName(), entry, () -> {
+            error.duplicatedFixityDeclaration(fixityNode);
+            throw new CompileTimeError();
+        });
 
         return null;
     }
