@@ -83,7 +83,7 @@ public abstract class AstRewriterVisitor implements Visitor<Node> {
         var body = (ExpressionNode) functionDefinitionNode.getBody().accept(this);
 
         return new FunctionDefinitionNode(functionDefinitionNode.getSpan(), functionDefinitionNode.getName(),
-                parameters, body);
+                parameters, body, functionDefinitionNode.getDispatchId());
     }
 
     @Override
