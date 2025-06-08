@@ -95,6 +95,11 @@ public class Error {
         printCode(token.span(), "has to be an integer between 0 and 9");
     }
 
+    public void fixitySignatureLacksBinding(FixityNode fixityNode) {
+        printErrorHead(fixityNode.getSpan(), "fixity signature lacks an accompanying binding");
+        printCode(fixityNode.getSpan(), "`%s` is not bound`".formatted(fixityNode.getOperatorName()));
+    }
+
     public void useOfUndefinedSymbol(IdentifierNode identifierNode) {
         printErrorHead(identifierNode.getSpan(), "use of undefined symbol");
         printCode(identifierNode.getSpan(), "is undefined");
