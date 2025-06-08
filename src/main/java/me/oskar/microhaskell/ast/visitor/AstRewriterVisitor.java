@@ -31,7 +31,10 @@ public abstract class AstRewriterVisitor implements Visitor<Node> {
 
         var body = (ExpressionNode) anonymousFunctionNode.getBody().accept(this);
 
-        return new AnonymousFunctionNode(anonymousFunctionNode.getSpan(), parameters, body);
+        var node = new AnonymousFunctionNode(anonymousFunctionNode.getSpan(), parameters, body);
+        node.setLocalTable(anonymousFunctionNode.getLocalTable());
+
+        return node;
     }
 
     @Override

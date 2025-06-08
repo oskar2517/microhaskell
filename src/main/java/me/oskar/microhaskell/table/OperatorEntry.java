@@ -8,10 +8,12 @@ public class OperatorEntry implements Entry {
 
     private final Associativity associativity;
     private final int precedence;
+    private final String operatorName;
 
-    public OperatorEntry(Associativity associativity, int precedence) {
+    public OperatorEntry(Associativity associativity, int precedence, String operatorName) {
         this.associativity = associativity;
         this.precedence = precedence;
+        this.operatorName = operatorName;
     }
 
     public int getPrecedence() {
@@ -20,6 +22,10 @@ public class OperatorEntry implements Entry {
 
     public Associativity getAssociativity() {
         return associativity;
+    }
+
+    public String getOperatorName() {
+        return operatorName;
     }
 
     @Override

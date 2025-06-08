@@ -21,9 +21,21 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(FixityNode fixityNode) {
-        var entry = new OperatorEntry(fixityNode.getAssociativity(), fixityNode.getPrecedence());
+        var entry = new OperatorEntry(fixityNode.getAssociativity(), fixityNode.getPrecedence(),
+                fixityNode.getOperatorName());
 
-        symbolTable.enter(fixityNode.getOperatorName(), entry, () -> error.duplicatedFixityDeclaration(fixityNode));
+        symbolTable.enterOperator(fixityNode.getOperatorName(), entry, () -> error.duplicatedFixityDeclaration(fixityNode));
+
+        return null;
+    }
+
+    @Override
+    public Void visit(FlatExpressionNode flatExpressionNode) {
+        for (var e : flatExpressionNode.getElements()) {
+            if (!(e instanceof Node n)) continue;
+
+            n.accept(this);
+        }
 
         return null;
     }
@@ -87,6 +99,8 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(AnonymousFunctionNode anonymousFunctionNode) {
+        System.out.println("Okk");
+
         var localTable = new SymbolTable(symbolTable);
         var localNameAnalyzerVisitor = new NameAnalyzerVisitor(localTable, error);
 

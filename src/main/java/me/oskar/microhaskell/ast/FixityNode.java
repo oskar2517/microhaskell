@@ -32,6 +32,6 @@ public class FixityNode extends Node {
 
     @Override
     public <T> T accept(Visitor<T> visitor) {
-        return null;
+        return visitor.visit(this);
     }
 }

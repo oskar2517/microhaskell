@@ -1,5 +1,6 @@
 package me.oskar.microhaskell;
 
+import me.oskar.microhaskell.ast.ProgramNode;
 import me.oskar.microhaskell.error.Error;
 import me.oskar.microhaskell.error.CompileTimeError;
 import me.oskar.microhaskell.evaluation.Builtins;
@@ -8,6 +9,7 @@ import me.oskar.microhaskell.analysis.NameAnalyzerVisitor;
 import me.oskar.microhaskell.analysis.RecursionAnalyzerVisitor;
 import me.oskar.microhaskell.analysis.SemanticAnalyzerVisitor;
 import me.oskar.microhaskell.lexer.Lexer;
+import me.oskar.microhaskell.parser.ExpressionRewriterVisitor;
 import me.oskar.microhaskell.parser.Parser;
 import me.oskar.microhaskell.table.SymbolTable;
 
@@ -39,13 +41,14 @@ public class Main {
         try {
             var ast = new Parser(lexer, error).parse();
 
-            System.out.println(ast);
-
-            /* var globalSymbolTable = new SymbolTable();
+            var globalSymbolTable = new SymbolTable();
             var env = Builtins.initialEnv(globalSymbolTable);
 
             var nameAnalyzer = new NameAnalyzerVisitor(globalSymbolTable, error);
             ast.accept(nameAnalyzer);
+
+            var astRewriterVisitor = new ExpressionRewriterVisitor(globalSymbolTable);
+            ast = (ProgramNode) ast.accept(astRewriterVisitor);
 
             var semanticAnalyzer = new SemanticAnalyzerVisitor(globalSymbolTable, error);
             ast.accept(semanticAnalyzer);
@@ -53,11 +56,11 @@ public class Main {
             var recursionAnalyzer = new RecursionAnalyzerVisitor(globalSymbolTable);
             ast.accept(recursionAnalyzer);
 
-            var irGenerator  = new IrGeneratorVisitor(globalSymbolTable, error);
+            var irGenerator = new IrGeneratorVisitor(globalSymbolTable, error);
             var ir = ast.accept(irGenerator);
 
             System.out.println(ir);
-            System.out.println(ir.evaluate(env)); */
+            System.out.println(ir.evaluate(env));
         } catch (CompileTimeError e) {
             System.exit(1);
         }
