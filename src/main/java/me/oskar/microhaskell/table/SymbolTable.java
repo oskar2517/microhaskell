@@ -30,22 +30,16 @@ public class SymbolTable {
         enterOperator(name, entry, () -> {});
     }
 
-    public OperatorEntry lookupOperator(String name, Runnable error) {
+    public OperatorEntry lookupOperator(String name) {
         if (operators.containsKey(name)) {
             return operators.get(name);
         }
 
         if (parent != null) {
-            return parent.lookupOperator(name, error);
+            return parent.lookupOperator(name);
         }
 
-        error.run();
-
-        return null;
-    }
-
-    public OperatorEntry lookupOperator(String name) {
-        return lookupOperator(name, () -> {});
+        return new OperatorEntry(OperatorEntry.Associativity.LEFT, 9);
     }
 
     public void enter(String name, Entry entry) {
