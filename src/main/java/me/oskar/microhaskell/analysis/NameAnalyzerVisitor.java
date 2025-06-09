@@ -120,6 +120,15 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
     }
 
     @Override
+    public Void visit(ListLiteralNode listLiteralNode) {
+        for (var v : listLiteralNode.getValue()) {
+            v.accept(this);
+        }
+
+        return null;
+    }
+
+    @Override
     public Void visit(ProgramNode programNode) {
         for (var b : programNode.getBindings()) {
             b.accept(this);

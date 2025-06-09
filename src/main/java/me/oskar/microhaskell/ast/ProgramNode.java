@@ -3,6 +3,7 @@ package me.oskar.microhaskell.ast;
 import me.oskar.microhaskell.ast.visitor.Visitor;
 import me.oskar.microhaskell.position.Span;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ProgramNode extends Node{
@@ -17,6 +18,14 @@ public class ProgramNode extends Node{
 
     public List<Node> getBindings() {
         return bindings;
+    }
+
+    public ProgramNode merge(ProgramNode other) {
+        var newBindings = new ArrayList<Node>();
+        newBindings.addAll(bindings);
+        newBindings.addAll(other.getBindings());
+
+        return new ProgramNode(new Span(getSpan().start(), other.getSpan().end()), newBindings);
     }
 
     @Override

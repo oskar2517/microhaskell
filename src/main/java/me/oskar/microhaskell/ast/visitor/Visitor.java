@@ -22,5 +22,7 @@ public interface Visitor<T> {
 
     T visit(LetNode letNode);
 
+    T visit(ListLiteralNode listLiteralNode);
+
     T visit(ProgramNode programNode);
 }

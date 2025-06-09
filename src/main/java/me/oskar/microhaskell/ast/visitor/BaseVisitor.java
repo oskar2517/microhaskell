@@ -50,6 +50,11 @@ public abstract class BaseVisitor<T> implements Visitor<T> {
     }
 
     @Override
+    public T visit(ListLiteralNode listLiteralNode) {
+        return null;
+    }
+
+    @Override
     public T visit(ProgramNode programNode) {
         return null;
     }

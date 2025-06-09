@@ -201,7 +201,7 @@ public class Parser {
         var left = parseFactor();
 
         while (currentToken.type() == TokenType.INT || currentToken.type() == TokenType.IDENT
-                || currentToken.type() == TokenType.L_PAREN) {
+                || currentToken.type() == TokenType.L_PAREN || currentToken.type() == TokenType.L_BRACK) {
             var argument = parseFactor();
             left = new FunctionApplicationNode(new Span(left.getSpan().start(), argument.getSpan().end()),
                     left, argument);
@@ -228,6 +228,7 @@ public class Parser {
 
                 yield expression;
             }
+            case L_BRACK -> parseListLiteral();
             case IF -> parseIf();
             case BACKSLASH -> parseAnonymousFunction();
             case IDENT -> new IdentifierNode(span, eatToken(TokenType.IDENT).lexeme());
@@ -237,6 +238,24 @@ public class Parser {
                 throw new CompileTimeError();
             }
         };
+    }
+
+    private ExpressionNode parseListLiteral() {
+        var startPosition = currentToken.span().start();
+
+        eatToken(TokenType.L_BRACK);
+
+        var value = new ArrayList<ExpressionNode>();
+
+        if (currentToken.type() != TokenType.R_BRACK) {
+            do {
+                value.add(parseExpression());
+            } while (matchToken(TokenType.COMMA));
+        }
+
+        var endPosition = eatToken(TokenType.R_BRACK).span().end();
+
+        return new ListLiteralNode(new Span(startPosition, endPosition), value);
     }
 
     private AtomicExpressionNode parseAtomicExpression() {

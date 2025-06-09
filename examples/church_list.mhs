@@ -34,4 +34,4 @@ exampleList = cons 1 (cons 2 (cons 3 (cons 4 nil)));
 print = foldl (\acc x -> acc * 10 + x) 0;
 
 -- 468
-main = print (tail (map (* 2) exampleList));
+main = print (tail (map ((*) 2) exampleList));

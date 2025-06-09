@@ -11,6 +11,7 @@ import me.oskar.microhaskell.analysis.SemanticAnalyzerVisitor;
 import me.oskar.microhaskell.lexer.Lexer;
 import me.oskar.microhaskell.parser.ExpressionRewriterVisitor;
 import me.oskar.microhaskell.parser.Parser;
+import me.oskar.microhaskell.prelude.Prelude;
 import me.oskar.microhaskell.table.SymbolTable;
 
 import java.io.IOException;
@@ -39,7 +40,7 @@ public class Main {
         var lexer = new Lexer(code);
 
         try {
-            var ast = new Parser(lexer, error).parse();
+            var ast = new Parser(lexer, error).parse().merge(Prelude.readPrelude());
 
             var globalSymbolTable = new SymbolTable();
             var env = Builtins.initialEnv(globalSymbolTable);

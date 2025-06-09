@@ -176,6 +176,20 @@ public  class IrGeneratorVisitor extends BaseVisitor<Expression> {
     }
 
     @Override
+    public Expression visit(ListLiteralNode listLiteralNode) {
+        var nilEntry = (FunctionEntry) symbolTable.lookup("nil");
+        var consEntry = (FunctionEntry) symbolTable.lookup("cons");
+
+        Expression previous = nilEntry.getNode().accept(this);
+        for (var v : listLiteralNode.getValue().reversed()) {
+            var appliedValue = new Application(consEntry.getNode().accept(this), v.accept(this));
+            previous = new Application(appliedValue, previous);
+        }
+
+        return previous;
+    }
+
+    @Override
     public Expression visit(ProgramNode programNode) {
         for (var b : programNode.getBindings()) {
             if (!(b instanceof FunctionDefinitionNode fd)) continue;

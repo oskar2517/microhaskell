@@ -18,11 +18,14 @@ public enum TokenType {
 
     L_PAREN("("),
     R_PAREN(")"),
+    L_BRACK("["),
+    R_BRACK("]"),
 
     BACKSLASH("\\"),
     ARROW("->"),
 
     SEMICOLON(";"),
+    COMMA(","),
 
     DEFINE("="),
     EOF("EOF"),

@@ -127,6 +127,17 @@ public abstract class AstRewriterVisitor implements Visitor<Node> {
     }
 
     @Override
+    public Node visit(ListLiteralNode listLiteralNode) {
+        var value = new ArrayList<ExpressionNode>();
+
+        for (var v : listLiteralNode.getValue()) {
+            value.add((ExpressionNode) v.accept(this));
+        }
+
+        return new ListLiteralNode(listLiteralNode.getSpan(), value);
+    }
+
+    @Override
     public Node visit(ProgramNode programNode) {
         var bindings = new ArrayList<Node>();
 

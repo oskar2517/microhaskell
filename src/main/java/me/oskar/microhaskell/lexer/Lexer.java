@@ -124,6 +124,9 @@ public class Lexer {
             case ';' -> new Token(TokenType.SEMICOLON, ";", span(startPosition, 1));
             case '(' -> new Token(TokenType.L_PAREN, "(", span(startPosition, 1));
             case ')' -> new Token(TokenType.R_PAREN, ")", span(startPosition, 1));
+            case '[' -> new Token(TokenType.L_BRACK, "[", span(startPosition, 1));
+            case ']' -> new Token(TokenType.R_BRACK, "]", span(startPosition, 1));
+            case ',' -> new Token(TokenType.COMMA, ",", span(startPosition, 1));
             case EOF -> new Token(TokenType.EOF, String.valueOf(EOF), span(startPosition, 1));
             default -> {
                 if (Character.isDigit(currentChar)) {

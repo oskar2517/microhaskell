@@ -123,6 +123,14 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
         return null;
     }
 
+    @Override
+    public Void visit(ListLiteralNode listLiteralNode) {
+        for (var v : listLiteralNode.getValue()) {
+            v.accept(this);
+        }
+
+        return null;
+    }
 
     private void detectRecursionViaSCC() {
         var indexMap = new HashMap<Integer, Integer>();

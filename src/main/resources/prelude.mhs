@@ -1,0 +1,137 @@
+-- Integer modulus: `mod a b` returns the remainder when `a` is divided by `b`.
+mod a b = a - (b * (a / b));
+
+-- Boolean negation: returns 1 if `n` is 0, else returns 0.
+not n = if n then 0 else 1;
+
+-- Checks if a number is even.
+even n = if (n / 2) * 2 == n then 1 else 0;
+
+-- Checks if a number is odd.
+odd n = not $ even n;
+
+-- Flips the arguments of a binary function.
+flip f x y = f y x;
+
+-- Identity function: returns its input.
+id x = x;
+
+-- Representation of an empty list (`nil`) using Church encoding.
+nil consCase nilCase = nilCase;
+
+-- Constructs a list by prepending an element `x` to list `xs`.
+cons x xs = \consCase nilCase -> consCase x (xs consCase nilCase);
+
+-- Right fold over a list.
+foldr f z xs = xs f z;
+
+-- Left fold using right fold (a trick to preserve tail recursion).
+foldl f acc xs = foldr (\x g -> (\a -> g (f a x))) (\a -> a) xs acc;
+
+-- Creates a list with `n` copies of element `x`.
+replicate n x =
+  if n > 0 then
+    cons x (replicate (n - 1) x)
+  else
+    nil;
+
+-- Returns the tail of a list (everything except the head).
+tail xs = \consCase nilCase ->
+  xs (\x rest -> \skipped ->
+    if skipped
+      then consCase x (rest 1)
+      else rest 1
+  ) (\_ -> nilCase) 0;
+
+-- Returns the head of a list.
+head xs = xs (\x _ -> x) 0;
+
+-- Applies function `f` to every element in list `xs`.
+map f xs = \consCase nilCase -> xs (\x rest -> consCase (f x) rest) nilCase;
+
+-- Filters elements in `xs` that satisfy predicate `p`.
+filter p xs = \consCase nilCase ->
+  xs (\x rest ->
+    if p x
+      then consCase x rest
+      else rest
+  ) nilCase;
+
+-- Takes the first `n` elements from list `xs`.
+take n xs =
+  \consCase nilCase ->
+    let rec = \n xs ->
+      xs
+        (\x rest ->
+          if n > 0
+            then cons x (rec (n - 1) rest)
+            else nil)
+        nil
+    in (rec n xs) consCase nilCase;
+
+-- Sum of all elements in a list.
+sum = foldr (+) 0;
+
+-- Checks if a list is empty.
+null xs = xs (\_ _ -> 0) 1;
+
+-- Concatenates a list of lists.
+concat xss = foldr (++) nil xss;
+
+-- Computes the length of a list.
+length xs = foldr (\_ acc -> acc + 1) 0 xs;
+
+-- Reverses a list.
+reverse xs = foldl (\acc x -> cons x acc) nil xs;
+
+-- Checks if element `x` is in list `xs`.
+elem x xs = foldr (\y acc -> y == x || acc) 0 xs;
+
+-- Checks if element `x` is not in list `xs`.
+notElem x xs = not $ elem x xs;
+
+-- Returns true if any element in `xs` satisfies predicate `p`.
+any p xs = foldr (\x acc -> p x || acc) 0 xs;
+
+-- Returns true if all elements in `xs` satisfy predicate `p`.
+all p xs = foldr (\x acc -> p x && acc) 1 xs;
+
+-- Product of all elements in a list.
+product xs = foldr (*) 1 xs;
+
+-- Maximum value in a list.
+maximum xs = foldr (\x acc -> if x > acc then x else acc) 0 xs;
+
+-- Minimum value in a list.
+minimum xs = foldr (\x acc -> if x < acc then x else acc) 0 xs;
+
+-- List concatenation (infix right-associative).
+infixr 5 ++;
+(++) xs ys = foldr cons ys xs;
+
+-- Function application (infix right-associative).
+infixr 0 $;
+($) f x = f x;
+
+-- Exponentiation (infix right-associative).
+infixr 8 ^;
+(^) a b =
+    if b == 0 then
+        1
+    else if even b then
+        let half = (^) a (b / 2) in
+            half * half
+    else
+        a * (^) a (b - 1);
+
+-- Boolean AND (infix right-associative).
+infixr 3 &&;
+(&&) a b = if a then b else 0;
+
+-- Boolean OR (infix right-associative).
+infixr 2 ||;
+(||) a b = if a then 1 else b;
+
+-- Function composition (infix right-associative).
+infixr 9 .;
+(.) f g = \x -> f (g x);
