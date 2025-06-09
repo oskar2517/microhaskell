@@ -1,0 +1,7 @@
+show = foldl (\acc x -> acc * 10 + x) 0;
+
+insert x xs = filter (\y -> y < x) xs ++ [x] ++ filter (\y -> y >= x) xs;
+
+insertionSort xs = foldr insert [] xs;
+
+main = show $ insertionSort [5, 6, 2, 1, 1];
