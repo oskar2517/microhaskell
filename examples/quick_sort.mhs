@@ -8,6 +8,6 @@ quickSort xs =
             rest = tail xs;
             smaller = filter (\x -> x <= pivot) rest;
             larger = filter (\x -> x > pivot) rest
-        in quickSort smaller ++ cons pivot (quickSort larger);
+        in quickSort smaller ++ [pivot] ++ quickSort larger;
 
 main = show $ quickSort [5, 6, 2, 1, 1];
