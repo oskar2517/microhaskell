@@ -40,7 +40,7 @@ public class Main {
         var lexer = new Lexer(code);
 
         try {
-            var ast = new Parser(lexer, error).parse().merge(Prelude.readPrelude());
+            var ast = Prelude.readPrelude().merge(new Parser(lexer, error).parse());
 
             var globalSymbolTable = new SymbolTable();
             var env = Builtins.initialEnv(globalSymbolTable);
