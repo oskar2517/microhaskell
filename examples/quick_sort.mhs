@@ -1,0 +1,13 @@
+show = foldl (\acc x -> acc * 10 + x) 0;
+
+quickSort xs =
+    if null xs then
+        []
+    else
+        let pivot = head xs;
+            rest = tail xs;
+            smaller = filter (\x -> x <= pivot) rest;
+            larger = filter (\x -> x > pivot) rest
+        in quickSort smaller ++ cons pivot (quickSort larger);
+
+main = show $ quickSort [5, 6, 2, 1, 1];
