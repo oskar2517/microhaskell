@@ -1,5 +1,11 @@
--- Integer modulus: `mod a b` returns the remainder when `a` is divided by `b`.
-mod a b = a - (b * (a / b));
+-- Calculates the absolute value of `x`.
+abs x = if x < 0 then (0 - x) else x;
+
+-- Calculates the modulus of `a` and `m`.
+mod a m = let r = (a - m * (a / m)) in
+    if r < 0
+    then r + abs m
+    else r;
 
 -- Boolean negation: returns 1 if `n` is 0, else returns 0.
 not n = if n then 0 else 1;
