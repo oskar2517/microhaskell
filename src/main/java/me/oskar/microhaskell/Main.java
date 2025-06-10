@@ -20,6 +20,24 @@ import java.nio.file.Path;
 
 public class Main {
 
+    public static ProgramNode process(SymbolTable symbolTable, Error error, Lexer lexer) {
+        var ast = new Parser(lexer, error).parse();
+
+        var nameAnalyzer = new NameAnalyzerVisitor(symbolTable, error);
+        ast.accept(nameAnalyzer);
+
+        var astRewriterVisitor = new ExpressionRewriterVisitor(symbolTable);
+        ast = (ProgramNode) ast.accept(astRewriterVisitor);
+
+        var semanticAnalyzer = new SemanticAnalyzerVisitor(symbolTable, error);
+        ast.accept(semanticAnalyzer);
+
+        var recursionAnalyzer = new RecursionAnalyzerVisitor(symbolTable);
+        ast.accept(recursionAnalyzer);
+
+        return ast;
+    }
+
     public static void main(String[] args) {
         if (args.length == 0) {
             System.err.println("Usage: mhs <input file>");
@@ -35,27 +53,14 @@ public class Main {
             System.exit(1);
         }
 
+        var globalSymbolTable = new SymbolTable();
+        var env = Builtins.initialEnv(globalSymbolTable);
         var error = new Error(code, filename);
 
         var lexer = new Lexer(code);
 
         try {
-            var ast = Prelude.readPrelude().merge(new Parser(lexer, error).parse());
-
-            var globalSymbolTable = new SymbolTable();
-            var env = Builtins.initialEnv(globalSymbolTable);
-
-            var nameAnalyzer = new NameAnalyzerVisitor(globalSymbolTable, error);
-            ast.accept(nameAnalyzer);
-
-            var astRewriterVisitor = new ExpressionRewriterVisitor(globalSymbolTable);
-            ast = (ProgramNode) ast.accept(astRewriterVisitor);
-
-            var semanticAnalyzer = new SemanticAnalyzerVisitor(globalSymbolTable, error);
-            ast.accept(semanticAnalyzer);
-
-            var recursionAnalyzer = new RecursionAnalyzerVisitor(globalSymbolTable);
-            ast.accept(recursionAnalyzer);
+            var ast = Prelude.readPrelude(globalSymbolTable).merge(process(globalSymbolTable, error, lexer));
 
             var irGenerator = new IrGeneratorVisitor(globalSymbolTable, error);
             var ir = ast.accept(irGenerator);

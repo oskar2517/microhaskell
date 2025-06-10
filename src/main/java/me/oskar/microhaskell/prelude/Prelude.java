@@ -1,9 +1,11 @@
 package me.oskar.microhaskell.prelude;
 
+import me.oskar.microhaskell.Main;
 import me.oskar.microhaskell.ast.ProgramNode;
 import me.oskar.microhaskell.error.Error;
 import me.oskar.microhaskell.lexer.Lexer;
 import me.oskar.microhaskell.parser.Parser;
+import me.oskar.microhaskell.table.SymbolTable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -25,13 +27,12 @@ public class Prelude {
         }
     }
 
-    public static ProgramNode readPrelude() {
+    public static ProgramNode readPrelude(SymbolTable symbolTable) {
         var prelude = readResourceAsString("prelude.mhs");
 
         var error = new Error(prelude, "prelude.mhs");
         var lexer = new Lexer(prelude);
-        var parser = new Parser(lexer, error);
 
-        return parser.parse();
+        return Main.process(symbolTable, error, lexer);
     }
 }
