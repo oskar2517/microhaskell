@@ -26,6 +26,7 @@ public enum TokenType {
 
     SEMICOLON(";"),
     COMMA(","),
+    BACKTICK("`"),
 
     DEFINE("="),
     EOF("EOF"),

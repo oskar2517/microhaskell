@@ -2,7 +2,8 @@
 abs x = if x < 0 then (0 - x) else x;
 
 -- Calculates the modulus of `a` and `m`.
-mod a m = let r = (a - m * (a / m)) in
+infixl 7 `mod`;
+mod a m = let r = (a - m * (a `div` m)) in
     if r < 0
     then r + abs m
     else r;
@@ -11,7 +12,7 @@ mod a m = let r = (a - m * (a / m)) in
 not n = if n then 0 else 1;
 
 -- Checks if a number is even.
-even n = if (n / 2) * 2 == n then 1 else 0;
+even n = if (n `div` 2) * 2 == n then 1 else 0;
 
 -- Checks if a number is odd.
 odd n = not $ even n;
@@ -91,9 +92,11 @@ length xs = foldr (\_ acc -> acc + 1) 0 xs;
 reverse xs = foldl (\acc x -> cons x acc) nil xs;
 
 -- Checks if element `x` is in list `xs`.
+infix 4 `elem`;
 elem x xs = foldr (\y acc -> y == x || acc) 0 xs;
 
 -- Checks if element `x` is not in list `xs`.
+infix 4 `notElem`;
 notElem x xs = not $ elem x xs;
 
 -- Returns true if any element in `xs` satisfies predicate `p`.
@@ -125,7 +128,7 @@ infixr 8 ^;
     if b == 0 then
         1
     else if even b then
-        let half = (^) a (b / 2) in
+        let half = (^) a (b `div` 2) in
             half * half
     else
         a * (^) a (b - 1);

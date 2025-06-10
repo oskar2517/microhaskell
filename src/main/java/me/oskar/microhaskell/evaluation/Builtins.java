@@ -42,14 +42,14 @@ public class Builtins {
         symbolTable.enter("*", new VariableEntry());
         symbolTable.enterOperator("*", new OperatorEntry(OperatorEntry.Associativity.LEFT, 7));
 
-        env.put("/", BuiltinFunction.of(2, args -> {
+        env.put("div", BuiltinFunction.of(2, args -> {
             var arg1 = (IntLiteral) args.getFirst().evaluate(env);
             var arg2 = (IntLiteral) args.get(1).evaluate(env);
 
             return new IntLiteral(arg1.value() / arg2.value());
         }));
-        symbolTable.enter("/", new VariableEntry());
-        symbolTable.enterOperator("/", new OperatorEntry(OperatorEntry.Associativity.LEFT, 7));
+        symbolTable.enter("div", new VariableEntry());
+        symbolTable.enterOperator("div", new OperatorEntry(OperatorEntry.Associativity.LEFT, 7));
 
         env.put("==", BuiltinFunction.of(2, args -> {
             var arg1 = (IntLiteral) args.getFirst().evaluate(env);
@@ -58,7 +58,7 @@ public class Builtins {
             return new IntLiteral(arg1.value() == arg2.value() ? 1 : 0);
         }));
         symbolTable.enter("==", new VariableEntry());
-        symbolTable.enterOperator("==", new OperatorEntry(OperatorEntry.Associativity.LEFT, 4));
+        symbolTable.enterOperator("==", new OperatorEntry(OperatorEntry.Associativity.NONE, 4));
 
         env.put("/=", BuiltinFunction.of(2, args -> {
             var arg1 = (IntLiteral) args.getFirst().evaluate(env);
@@ -67,7 +67,7 @@ public class Builtins {
             return new IntLiteral(arg1.value() != arg2.value() ? 1 : 0);
         }));
         symbolTable.enter("/=", new VariableEntry());
-        symbolTable.enterOperator("/=", new OperatorEntry(OperatorEntry.Associativity.LEFT, 4));
+        symbolTable.enterOperator("/=", new OperatorEntry(OperatorEntry.Associativity.NONE, 4));
 
         env.put("<=", BuiltinFunction.of(2, args -> {
             var arg1 = (IntLiteral) args.getFirst().evaluate(env);
@@ -76,7 +76,7 @@ public class Builtins {
             return new IntLiteral(arg1.value() <= arg2.value() ? 1 : 0);
         }));
         symbolTable.enter("<=", new VariableEntry());
-        symbolTable.enterOperator("<=", new OperatorEntry(OperatorEntry.Associativity.LEFT, 4));
+        symbolTable.enterOperator("<=", new OperatorEntry(OperatorEntry.Associativity.NONE, 4));
 
         env.put("<", BuiltinFunction.of(2, args -> {
             var arg1 = (IntLiteral) args.getFirst().evaluate(env);
@@ -85,7 +85,7 @@ public class Builtins {
             return new IntLiteral(arg1.value() < arg2.value() ? 1 : 0);
         }));
         symbolTable.enter("<", new VariableEntry());
-        symbolTable.enterOperator("<", new OperatorEntry(OperatorEntry.Associativity.LEFT, 4));
+        symbolTable.enterOperator("<", new OperatorEntry(OperatorEntry.Associativity.NONE, 4));
 
         env.put(">=", BuiltinFunction.of(2, args -> {
             var arg1 = (IntLiteral) args.getFirst().evaluate(env);
@@ -94,7 +94,7 @@ public class Builtins {
             return new IntLiteral(arg1.value() >= arg2.value() ? 1 : 0);
         }));
         symbolTable.enter(">=", new VariableEntry());
-        symbolTable.enterOperator(">=", new OperatorEntry(OperatorEntry.Associativity.LEFT, 4));
+        symbolTable.enterOperator(">=", new OperatorEntry(OperatorEntry.Associativity.NONE, 4));
 
         env.put(">", BuiltinFunction.of(2, args -> {
             var arg1 = (IntLiteral) args.getFirst().evaluate(env);
@@ -103,7 +103,7 @@ public class Builtins {
             return new IntLiteral(arg1.value() > arg2.value() ? 1 : 0);
         }));
         symbolTable.enter(">", new VariableEntry());
-        symbolTable.enterOperator(">", new OperatorEntry(OperatorEntry.Associativity.LEFT, 4));
+        symbolTable.enterOperator(">", new OperatorEntry(OperatorEntry.Associativity.NONE, 4));
 
         env.put("if", BuiltinFunction.of(3, args -> {
             var condition = (IntLiteral) args.getFirst().evaluate(env);

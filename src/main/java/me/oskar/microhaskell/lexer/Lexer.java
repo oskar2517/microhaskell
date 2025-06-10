@@ -70,6 +70,17 @@ public class Lexer {
         return code.substring(startPosition - 1, position);
     }
 
+    private String readIdentOperator() {
+        var savePosition = position;
+        nextChar(); // Skip opening `
+        while (readChar() != '`' && readChar() != EOF) {
+            nextChar();
+        }
+        nextChar(); // Skip closing `
+
+        return code.substring(savePosition, position - 1);
+    }
+
     private String readIntegerLiteral() {
         var startPosition = position;
         while (Character.isDigit(readChar())) {
@@ -127,6 +138,14 @@ public class Lexer {
             case '[' -> new Token(TokenType.L_BRACK, "[", span(startPosition, 1));
             case ']' -> new Token(TokenType.R_BRACK, "]", span(startPosition, 1));
             case ',' -> new Token(TokenType.COMMA, ",", span(startPosition, 1));
+            case '`' -> {
+                var operator = readIdentOperator();
+                if (operator.chars().anyMatch(c -> !isValidIdentifierChar((char) c))) {
+                    yield new Token(TokenType.ILLEGAL, operator, span(startPosition, operator.length() + 1));
+                }
+
+                yield new Token(TokenType.OPERATOR, operator, span(startPosition, operator.length() + 2));
+            }
             case EOF -> new Token(TokenType.EOF, String.valueOf(EOF), span(startPosition, 1));
             default -> {
                 if (Character.isDigit(currentChar)) {
