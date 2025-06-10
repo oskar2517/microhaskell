@@ -1,7 +1,3 @@
-infixr 0 $;
-
-($) f x = f x;
-
 succ n = n + 1;
 
 main = succ $ succ $ succ 1;

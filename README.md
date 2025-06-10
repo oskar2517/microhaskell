@@ -28,15 +28,6 @@ fibonacci n =
     else if n == 1 then 1
     else fibonacci (n - 1) + fibonacci (n - 2);
 
--- Calculates the modulo of a and b
-mod a m =
-    if (a - m * (a / m)) < 0
-    then (a - m * (a / m)) + abs m
-    else a - m * (a / m);
-
--- Returns the absolute value of x
-abs x = if x < 0 then (0 - x) else x;
-
 -- Calculates the great common divisor of a and b
 gcd a b =
     if b == 0
@@ -66,11 +57,12 @@ isFiveOdd =
     in
         isOdd n;
 
-
 lambda = (\x y -> x * y) 3 4;
 
 main = (apply (+) (curriedGcd 317523) (fibonacci 10)) * factorial 4 - constant + isFiveOdd * lambda;
 ```
+
+For more examples, checkout the [examples](examples) directory and the Micro Haskell [prelude](src/main/resources/prelude.mhs).
 
 ## Future Work
 
