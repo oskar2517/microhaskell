@@ -42,6 +42,16 @@ public class Error {
         System.out.println(s);
     }
 
+    private void printErrorLine(int startOffset, int endOffset, String lineCount, String codeLine) {
+        var startPart = codeLine.substring(0, startOffset);
+        var errorPart = codeLine.substring(startOffset, endOffset);
+        var endPart = codeLine.substring(endOffset);
+
+        var s = startPart + ANSI_RED + errorPart + ANSI_RESET + endPart;
+
+        System.out.printf("   %s | %s%n", lineCount, s);
+    }
+
     private void printCode(Span span, String underlineMessage) {
         var codePreviewStart = Math.max(span.start().line() - 2, 1);
         var codePreviewEnd = Math.min(span.end().line() + 3, code.size());
@@ -52,7 +62,25 @@ public class Error {
             var lineCount = padLeft(String.valueOf(i), lineCountWidth);
             var codeLine = code.get(i - 1);
 
-            System.out.printf("   %s | %s%n", lineCount, codeLine);
+            if (span.includesLine(i)) {
+                if (span.isMultiline()) {
+                    if (i == span.start().line()) {
+                        var startOffset = span.start().lineOffset();
+                        var endOffset = codeLine.length();
+                        printErrorLine(startOffset, endOffset, lineCount, codeLine);
+                    } else if (i == span.end().line()) {
+                        var startOffset = 0;
+                        var endOffset = span.end().lineOffset();
+                        printErrorLine(startOffset, endOffset, lineCount, codeLine);
+                    } else {
+                        printErrorLine(0, codeLine.length(), lineCount, codeLine);
+                    }
+                } else {
+                    printErrorLine(span.start().lineOffset(), span.end().lineOffset(), lineCount, codeLine);
+                }
+            } else {
+                System.out.printf("   %s | %s%n", lineCount, codeLine);
+            }
 
             if (span.isMultiline()) {
                 if (i == span.start().line()) {
