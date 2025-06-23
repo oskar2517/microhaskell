@@ -122,6 +122,10 @@ infixr 5 ++;
 infixr 0 $;
 ($) f x = f x;
 
+-- Function composition (infix right-associative).
+infixr 9 .;
+(.) f g = \x -> f (g x);
+
 -- Exponentiation (infix right-associative).
 infixr 8 ^;
 (^) a b =
@@ -141,6 +145,11 @@ infixr 3 &&;
 infixr 2 ||;
 (||) a b = if a then 1 else b;
 
--- Function composition (infix right-associative).
-infixr 9 .;
-(.) f g = \x -> f (g x);
+-- Retrieves the n-th element from a list.
+infixl 9 !!;
+(!!) xs n =
+  xs (\x rest -> \i ->
+    if i == 0
+      then x
+      else rest (i - 1)
+  ) (\_ -> 0) n;
