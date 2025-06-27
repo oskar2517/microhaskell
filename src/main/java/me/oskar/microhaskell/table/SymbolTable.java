@@ -60,6 +60,14 @@ public class SymbolTable {
         }
     }
 
+    public void remove(String name) {
+        if (symbols.containsKey(name)) {
+            symbols.remove(name);
+        } else if (parent != null) {
+            parent.remove(name);
+        }
+    }
+
     public Entry lookup(String name) {
         if (symbols.containsKey(name)) {
             return symbols.get(name);

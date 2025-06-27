@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public  class IrGeneratorVisitor extends BaseVisitor<Expression> {
+public class IrGeneratorVisitor extends BaseVisitor<Expression> {
 
     private static final Expression Y_COMBINATOR = new Lambda("f",
             new Application(
@@ -204,8 +204,7 @@ public  class IrGeneratorVisitor extends BaseVisitor<Expression> {
                 .findFirst();
 
         if (main.isEmpty()) {
-            error.mainFunctionMissing();
-            throw new CompileTimeError();
+            throw error.mainFunctionMissing();
         }
 
         var body = main.get().accept(this);
