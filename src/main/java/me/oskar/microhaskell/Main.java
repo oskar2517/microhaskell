@@ -40,12 +40,10 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        var repl = new Repl();
-        repl.start();
-
         if (args.length == 0) {
-            System.err.println("Usage: mhs <input file>");
-            System.exit(1);
+            var repl = new Repl();
+            repl.start();
+            return;
         }
 
         var filename = args[0];

@@ -24,6 +24,8 @@ public class Repl {
     private ProgramNode program = new ProgramNode(Span.BASE_SPAN, Collections.emptyList());
 
     public void start() {
+        System.out.println("Welcome to the Micro Haskell REPL!");
+
         while (true) {
             var code = read();
             var result = evaluate(code);
