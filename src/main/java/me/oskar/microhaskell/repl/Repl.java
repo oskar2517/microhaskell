@@ -10,10 +10,9 @@ import me.oskar.microhaskell.evaluation.Builtins;
 import me.oskar.microhaskell.evaluation.expression.Expression;
 import me.oskar.microhaskell.ir.IrGeneratorVisitor;
 import me.oskar.microhaskell.lexer.Lexer;
-import me.oskar.microhaskell.position.Span;
+import me.oskar.microhaskell.prelude.Prelude;
 import me.oskar.microhaskell.table.SymbolTable;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -21,7 +20,7 @@ public class Repl {
 
     private final SymbolTable symbolTable = new SymbolTable();
     private final Map<String, Expression> env = Builtins.initialEnv(symbolTable);
-    private ProgramNode program = new ProgramNode(Span.BASE_SPAN, Collections.emptyList());
+    private ProgramNode program = Prelude.readPrelude(symbolTable);
 
     public void start() {
         System.out.println("Welcome to the Micro Haskell REPL!");
