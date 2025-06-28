@@ -25,7 +25,7 @@ public class Repl {
     private ProgramNode program;
 
     public void start() {
-        printPrefixedLine("Welcome to the Micro Haskell REPL -- Version 1.0.0");
+        printPrefixedLine("Welcome to the Micro Haskell REPL");
         printPrefixedLine("Type :help for more information");
         System.out.println();
 
