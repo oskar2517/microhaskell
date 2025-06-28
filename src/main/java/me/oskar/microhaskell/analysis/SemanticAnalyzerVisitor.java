@@ -20,8 +20,7 @@ public class SemanticAnalyzerVisitor extends BaseVisitor<Void> {
     @Override
     public Void visit(FixityNode fixityNode) {
         symbolTable.lookup(fixityNode.getOperatorName(), () -> {
-            error.fixitySignatureLacksBinding(fixityNode);
-            throw new CompileTimeError();
+            throw error.fixitySignatureLacksBinding(fixityNode);
         });
 
         return null;
@@ -31,8 +30,7 @@ public class SemanticAnalyzerVisitor extends BaseVisitor<Void> {
     public Void visit(IdentifierNode identifierNode) {
         if (symbolTable.isDefined(identifierNode.getName())) return null;
 
-        error.useOfUndefinedSymbol(identifierNode);
-        throw new CompileTimeError();
+        throw error.useOfUndefinedSymbol(identifierNode);
     }
 
     @Override

@@ -24,8 +24,7 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
         var entry = new OperatorEntry(fixityNode.getAssociativity(), fixityNode.getPrecedence());
 
         symbolTable.enterOperator(fixityNode.getOperatorName(), entry, () -> {
-            error.duplicatedFixityDeclaration(fixityNode);
-            throw new CompileTimeError();
+            throw error.duplicatedFixityDeclaration(fixityNode);
         });
 
         return null;
@@ -49,8 +48,7 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
 
         for (var p : functionDefinitionNode.getParameters()) {
             localTable.enter(((IdentifierNode) p).getName(), new VariableEntry(), () -> {
-                error.redefinitionAsParameter(p);
-                throw new CompileTimeError();
+                throw error.redefinitionAsParameter(p);
             });
         }
 
@@ -59,8 +57,7 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
         var functionEntry = new FunctionEntry(localTable, functionDefinitionNode.getDispatchId());
 
         symbolTable.enter(functionDefinitionNode.getName(), functionEntry, () -> {
-            error.redefinitionAsFunction(functionDefinitionNode);
-            throw new CompileTimeError();
+            throw error.redefinitionAsFunction(functionDefinitionNode);
         });
 
         return null;
@@ -106,9 +103,7 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
 
         for (var p : anonymousFunctionNode.getParameters()) {
             localTable.enter(((IdentifierNode) p).getName(), new VariableEntry(), () -> {
-                error.redefinitionAsParameter(p);
-
-                throw new CompileTimeError();
+                throw error.redefinitionAsParameter(p);
             });
         }
 

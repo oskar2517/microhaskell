@@ -35,9 +35,7 @@ public class Parser {
             return t;
         }
 
-        error.unexpectedToken(currentToken, "`%s`".formatted(type));
-
-        throw new CompileTimeError();
+        throw error.unexpectedToken(currentToken, "`%s`".formatted(type));
     }
 
     private boolean matchToken(TokenType type) {
@@ -80,10 +78,7 @@ public class Parser {
             case INFIX -> OperatorEntry.Associativity.NONE;
             case INFIX_L -> OperatorEntry.Associativity.LEFT;
             case INFIX_R -> OperatorEntry.Associativity.RIGHT;
-            default -> {
-                error.unexpectedToken(currentToken, "`%s`".formatted(currentToken));
-                yield null;
-            }
+            default -> throw error.unexpectedToken(currentToken, "`%s`".formatted(currentToken));
         };
 
         nextToken();
@@ -93,10 +88,10 @@ public class Parser {
         try {
             precedence = Integer.parseInt(eatToken(TokenType.INT).lexeme());
             if (precedence < 0 || precedence > 9) {
-                error.invalidOperatorPrecedence(precedenceToken);
+                throw error.invalidOperatorPrecedence(precedenceToken);
             }
         } catch (NumberFormatException e) {
-            error.invalidOperatorPrecedence(precedenceToken);
+            throw error.invalidOperatorPrecedence(precedenceToken);
         }
 
         var operatorToken = currentToken;
@@ -137,8 +132,7 @@ public class Parser {
             return name;
         }
 
-        error.invalidFunctionName(currentToken);
-        throw new CompileTimeError();
+        throw error.invalidFunctionName(currentToken);
     }
 
     private AnonymousFunctionNode parseAnonymousFunction() {
@@ -233,10 +227,7 @@ public class Parser {
             case BACKSLASH -> parseAnonymousFunction();
             case IDENT -> new IdentifierNode(span, eatToken(TokenType.IDENT).lexeme());
             case INT -> new IntLiteralNode(span, Integer.parseInt(eatToken(TokenType.INT).lexeme()));
-            default -> {
-                error.unexpectedToken(currentToken, "expression");
-                throw new CompileTimeError();
-            }
+            default -> throw error.unexpectedToken(currentToken, "expression");
         };
     }
 
@@ -264,10 +255,7 @@ public class Parser {
         return switch (currentToken.type()) {
             case IDENT -> new IdentifierNode(span, eatToken(TokenType.IDENT).lexeme());
             case INT -> new IntLiteralNode(span, Integer.parseInt(eatToken(TokenType.INT).lexeme()));
-            default -> {
-                error.unexpectedToken(currentToken, "atomic expression");
-                throw new CompileTimeError();
-            }
+            default -> throw error.unexpectedToken(currentToken, "atomic expression");
         };
     }
 

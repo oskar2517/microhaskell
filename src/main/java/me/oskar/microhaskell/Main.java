@@ -12,6 +12,7 @@ import me.oskar.microhaskell.lexer.Lexer;
 import me.oskar.microhaskell.parser.ExpressionRewriterVisitor;
 import me.oskar.microhaskell.parser.Parser;
 import me.oskar.microhaskell.prelude.Prelude;
+import me.oskar.microhaskell.repl.Repl;
 import me.oskar.microhaskell.table.SymbolTable;
 
 import java.io.IOException;
@@ -40,8 +41,9 @@ public class Main {
 
     public static void main(String[] args) {
         if (args.length == 0) {
-            System.err.println("Usage: mhs <input file>");
-            System.exit(1);
+            var repl = new Repl();
+            repl.start();
+            return;
         }
 
         var filename = args[0];
@@ -68,6 +70,7 @@ public class Main {
             System.out.println(ir);
             System.out.println(ir.evaluate(env));
         } catch (CompileTimeError e) {
+            e.printError();
             System.exit(1);
         }
     }
