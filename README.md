@@ -14,6 +14,7 @@ Micro Haskell is an interpreter for a small subset of the Haskell programming la
 - Basic arithmetic and conditionals
 - Let bindings
 - Custom operators
+- REPL with syntax highlighting
 
 ## Example
 
@@ -71,5 +72,4 @@ Potential future enhancements to Micro Haskell include:
 
 - Pattern matching
 - User-defined algebraic data types
-- REPL interface
 - Improved error handling
