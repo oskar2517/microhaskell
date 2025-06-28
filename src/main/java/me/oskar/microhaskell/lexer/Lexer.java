@@ -124,6 +124,22 @@ public class Lexer {
                 startPosition.lineOffset() + length));
     }
 
+    public Token peekToken() {
+        var previousPosition = position;
+        var previousLine = line;
+        var previousLineOffset = lineOffset;
+        var previousChar = currentChar;
+
+        var token = nextToken();
+
+        position = previousPosition;
+        line = previousLine;
+        lineOffset = previousLineOffset;
+        currentChar = previousChar;
+
+        return token;
+    }
+
     public Token nextToken() {
         nextChar();
         eatWhitespace();

@@ -18,25 +18,82 @@ import java.util.Scanner;
 
 public class Repl {
 
-    private final SymbolTable symbolTable = new SymbolTable();
-    private final Map<String, Expression> env = Builtins.initialEnv(symbolTable);
-    private ProgramNode program = Prelude.readPrelude(symbolTable);
+    private static final String COMMAND_PREFIX = ":";
+
+    private SymbolTable symbolTable;
+    private Map<String, Expression> env;
+    private ProgramNode program;
 
     public void start() {
-        System.out.println("Welcome to the Micro Haskell REPL!");
+        printPrefixedLine("Welcome to the Micro Haskell REPL -- Version 1.0.0");
+        printPrefixedLine("Type :help for more information");
+        System.out.println();
+
+        initialize();
 
         while (true) {
-            var code = read();
-            var result = evaluate(code);
+            var line = read();
+            if (processCommand(line)) continue;
+            var result = evaluate(line);
             print(result);
         }
     }
 
+    private void initialize() {
+        symbolTable = new SymbolTable();
+        env = Builtins.initialEnv(symbolTable);
+        program = Prelude.readPrelude(symbolTable);
+    }
+
+    private void printPrefixedLine(String s) {
+        System.out.print("|  ");
+        System.out.println(s);
+    }
+
     private String read() {
-        System.out.print("> ");
+        System.out.print("mhs> ");
         var scanner = new Scanner(System.in);
 
-        return scanner.nextLine();
+        var line = scanner.nextLine();
+
+        if (!line.startsWith(COMMAND_PREFIX)) {
+            var highlighter = new Highlighter(line);
+            highlighter.highlight();
+        }
+
+        return line;
+    }
+
+    private boolean processCommand(String line) {
+        if (!line.startsWith(":")) return false;
+
+        var command = line.substring(1).split(" ");
+
+        if (command.length == 0) return false;
+
+        return switch (command[0]) {
+            case "reset" -> {
+                initialize();
+                printPrefixedLine("Reset REPL state");
+
+                yield true;
+            }
+            case "help" -> {
+                printPrefixedLine("Micro Haskell REPL - Available commands:");
+                printPrefixedLine("  :reset   Resets the REPL state");
+                printPrefixedLine("  :help    Shows this help message");
+                printPrefixedLine("  :exit    Exits the REPL");
+
+                yield true;
+            }
+            case "exit" -> {
+                printPrefixedLine("Goodbye!");
+                System.exit(0);
+
+                yield true;
+            }
+            default -> false;
+        };
     }
 
     private Expression evaluate(String code) {
@@ -72,6 +129,6 @@ public class Repl {
     private void print(Expression expr) {
         if (expr == null) return;
 
-        System.out.println(expr);
+        printPrefixedLine(expr.toString());
     }
 }
