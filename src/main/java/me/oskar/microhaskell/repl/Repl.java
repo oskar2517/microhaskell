@@ -65,7 +65,7 @@ public class Repl {
     }
 
     private boolean processCommand(String line) {
-        if (!line.startsWith(":")) return false;
+        if (!line.startsWith(COMMAND_PREFIX)) return false;
 
         var command = line.substring(1).split(" ");
 
