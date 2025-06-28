@@ -8,7 +8,6 @@ class Highlighter {
 
     private static final String KEYWORD1 = "\u001B[38;5;69m";   // #5499D2
     private static final String KEYWORD2 = "\u001B[38;5;139m";  // #C586C0
-    private static final String IDENT = "\u001B[38;5;117m";     // #9CDCFE
     private static final String NUMBER = "\u001B[38;5;151m";    // #B5CEA8
     private static final String DEFAULT = "\u001B[38;5;250m";   // #D4D4D4
     private static final String RESET = "\u001B[0m";
@@ -30,7 +29,6 @@ class Highlighter {
             if (token.type() == TokenType.EOF) break;
 
             var highlightedToken = switch (token.type()) {
-                case IDENT -> highlightToken(token, IDENT);
                 case INT -> highlightToken(token, NUMBER);
                 case INFIX, INFIX_L, INFIX_R, LET, IN -> highlightToken(token, KEYWORD1);
                 case IF, THEN, ELSE -> highlightToken(token, KEYWORD2);
