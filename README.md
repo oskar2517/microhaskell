@@ -9,6 +9,7 @@ Micro Haskell is an interpreter for a small subset of the Haskell programming la
 - Function definitions
 - Function applications
 - Anonymous functions (Lambdas)
+- Lists (Church-encoded)
 - Currying
 - Recursive binding
 - Basic arithmetic and conditionals
