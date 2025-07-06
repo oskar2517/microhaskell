@@ -1,6 +1,6 @@
 # Micro Haskell
 
-Micro Haskell is an interpreter for a small subset of the Haskell programming language. It is designed around an immediate representation rooted in the principles of the lambda calculus. This project serves both as a practical tool for experimenting with functional programming constructs and as an educational platform for studying the theoretical concepts of Haskell and functional languages more broadly.
+Micro Haskell is an interpreter for a small subset of the Haskell programming language. It is designed around an intermediate representation rooted in the principles of the lambda calculus. This project serves both as a practical tool for experimenting with functional programming constructs and as an educational platform for studying the theoretical concepts of Haskell and functional languages more broadly.
 
 ## Features
 
