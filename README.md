@@ -2,6 +2,8 @@
 
 Micro Haskell is an interpreter for a small subset of the Haskell programming language. It is designed around an intermediate representation rooted in the principles of the lambda calculus. This project serves both as a practical tool for experimenting with functional programming constructs and as an educational platform for studying the theoretical concepts of Haskell and functional languages more broadly.
 
+For more details, please refer to the [report](/MicroHaskell%20Report.pdf) I wrote about the development of this language.
+
 ## Features
 
 - Lazy evaluation
