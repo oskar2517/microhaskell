@@ -1,6 +1,19 @@
-# Micro Haskell
+<div align="center">
+  <a href="https://git.thm.de/omar36/intellij-spl-plugin">
+    <img src="assets/mh_logo.png" alt="Logo" width="80" height="80">
+  </a>
 
-Micro Haskell is an interpreter for a small subset of the Haskell programming language. It is designed around an intermediate representation rooted in the principles of the lambda calculus. This project serves both as a practical tool for experimenting with functional programming constructs and as an educational platform for studying the theoretical concepts of Haskell and functional languages more broadly.
+<h3 align="center">MicroHaskell</h3>
+
+  <p align="center">
+    Lambda-calculus-based Interpreter for a Haskell subset
+    <hr />
+  </p>
+</div>
+
+## Introduction
+
+MicroHaskell is an interpreter for a small subset of the Haskell programming language. It is designed around an intermediate representation rooted in the principles of the lambda calculus. This project serves both as a practical tool for experimenting with functional programming constructs and as an educational platform for studying the theoretical concepts of Haskell and functional languages more broadly.
 
 For more details, please refer to the [report](/MicroHaskell%20Report.pdf) I wrote about the development of this language.
 
@@ -21,7 +34,7 @@ For more details, please refer to the [report](/MicroHaskell%20Report.pdf) I wro
 
 ## Example
 
-The following example demonstrates recursive function definitions, arithmetic, currying, and higher-order functions in Micro Haskell:
+The following example demonstrates recursive function definitions, arithmetic, currying, and higher-order functions in MicroHaskell:
 
 ```haskell
 -- Calculates the factorial of n
@@ -67,11 +80,11 @@ lambda = (\x y -> x * y) 3 4;
 main = (apply (+) (curriedGcd 317523) (fibonacci 10)) * factorial 4 - constant + isFiveOdd * lambda;
 ```
 
-For more examples, checkout the [examples](examples) directory and the Micro Haskell [prelude](src/main/resources/prelude.mhs).
+For more examples, checkout the [examples](examples) directory and the MicroHaskell [prelude](src/main/resources/prelude.mhs).
 
 ## Future Work
 
-Potential future enhancements to Micro Haskell include:
+Potential future enhancements to MicroHaskell include:
 
 - Pattern matching
 - User-defined algebraic data types
