@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://git.thm.de/omar36/intellij-spl-plugin">
+  <a href="https://github.com/oskar2517/microhaskell">
     <img src="assets/mh_logo.png" alt="Logo" width="80" height="80">
   </a>
 
