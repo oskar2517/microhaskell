@@ -39,7 +39,7 @@ public class Main {
         return ast;
     }
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         if (args.length == 0) {
             var repl = new Repl();
             repl.start();
