@@ -1,4 +1,4 @@
-package me.oskar.microhaskell.analysis;
+package me.oskar.microhaskell.analysis.recursion;
 
 import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.ast.visitor.BaseVisitor;
@@ -9,18 +9,18 @@ import java.util.*;
 
 public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
-    private final Map<Integer, Set<Integer>> applicationGraph;
-
     private final SymbolTable symbolTable;
-    private final Set<Integer> currentApplications;
+    private final Map<FunctionEntry, Set<FunctionEntry>> applicationGraph;
+    private final Set<FunctionEntry> currentApplications;
 
     public RecursionAnalyzerVisitor(SymbolTable symbolTable) {
         this(symbolTable, new HashMap<>(), null);
     }
 
-    private RecursionAnalyzerVisitor(SymbolTable symbolTable,
-                                     Map<Integer, Set<Integer>> applicationGraph,
-                                     Set<Integer> currentApplications) {
+    private RecursionAnalyzerVisitor(
+            SymbolTable symbolTable,
+            Map<FunctionEntry, Set<FunctionEntry>> applicationGraph,
+            Set<FunctionEntry> currentApplications) {
         this.symbolTable = symbolTable;
         this.applicationGraph = applicationGraph;
         this.currentApplications = currentApplications;
@@ -32,7 +32,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
             b.accept(this);
         }
 
-        detectRecursionViaSCC();
+        detectRecursionInCurrentScope();
 
         return null;
     }
@@ -41,11 +41,13 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
     public Void visit(FunctionDefinitionNode functionDefinitionNode) {
         var entry = (FunctionEntry) symbolTable.lookup(functionDefinitionNode.getName());
 
-        var functionApplications = new HashSet<Integer>();
+        var functionApplications = new HashSet<FunctionEntry>();
         var localAnalyzer = new RecursionAnalyzerVisitor(entry.getLocalTable(), applicationGraph, functionApplications);
 
         functionDefinitionNode.getBody().accept(localAnalyzer);
-        applicationGraph.put(entry.getDispatchId(), functionApplications);
+        if (applicationGraph.put(entry, functionApplications) != null) {
+            throw new IllegalStateException("Duplicated function in application graph");
+        }
 
         return null;
     }
@@ -63,17 +65,10 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
         letNode.getExpression().accept(this);
 
         for (var b : letNode.getBindings()) {
-            if (!(b instanceof FunctionDefinitionNode fd)) continue;
-
-            var entry = (FunctionEntry) letNode.getLocalTable().lookup(fd.getName());
-            applicationGraph.putIfAbsent(entry.getDispatchId(), new HashSet<>());
-        }
-
-        for (var b : letNode.getBindings()) {
             b.accept(this);
         }
 
-        detectRecursionViaSCC();
+        detectRecursionInCurrentScope();
 
         return null;
     }
@@ -117,7 +112,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
         var entry = symbolTable.lookup(identifierNode.getName());
         if (entry instanceof FunctionEntry fe) {
-            currentApplications.add(fe.getDispatchId());
+            currentApplications.add(fe);
         }
 
         return null;
@@ -132,70 +127,21 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
         return null;
     }
 
-    private void detectRecursionViaSCC() {
-        var indexMap = new HashMap<Integer, Integer>();
-        var lowLinkMap = new HashMap<Integer, Integer>();
-        var stack = new ArrayDeque<Integer>();
-        var onStack = new HashSet<Integer>();
-        var sccs = new ArrayList<Set<Integer>>();
-
-        var index = new int[]{0};
-
-        for (var function : applicationGraph.keySet()) {
-            if (!indexMap.containsKey(function)) {
-                strongConnect(function, index, indexMap, lowLinkMap, stack, onStack, sccs);
-            }
-        }
+    private void detectRecursionInCurrentScope() {
+        var tarjan = new Tarjan<>(applicationGraph);
+        var sccs = tarjan.findSCCs();
 
         for (var scc : sccs) {
             for (var fn : scc) {
-                var entry = symbolTable.lookupFunctionByDispatchId(fn);
-                if (entry != null) {
-                    if (scc.size() > 1) {
-                        entry.setAppliedMutuallyRecursively(true);
-                    }
-                    if (applicationGraph.getOrDefault(fn, Set.of()).contains(fn)) {
-                        entry.setAppliedSelfRecursively(true);
-                    }
+                if (fn.getOwnerTable() != symbolTable) continue;
+
+                if (scc.size() > 1) {
+                    fn.setAppliedMutuallyRecursively(true);
+                }
+                if (applicationGraph.getOrDefault(fn, Set.of()).contains(fn)) {
+                    fn.setAppliedSelfRecursively(true);
                 }
             }
-        }
-    }
-
-
-    private void strongConnect(
-            Integer function,
-            int[] index,
-            Map<Integer, Integer> indexMap,
-            Map<Integer, Integer> lowLinkMap,
-            Deque<Integer> stack,
-            Set<Integer> onStack,
-            List<Set<Integer>> sccs) {
-
-        indexMap.put(function, index[0]);
-        lowLinkMap.put(function, index[0]);
-        index[0]++;
-        stack.push(function);
-        onStack.add(function);
-
-        for (var target : applicationGraph.getOrDefault(function, Set.of())) {
-            if (!indexMap.containsKey(target)) {
-                strongConnect(target, index, indexMap, lowLinkMap, stack, onStack, sccs);
-                lowLinkMap.put(function, Math.min(lowLinkMap.get(function), lowLinkMap.get(target)));
-            } else if (onStack.contains(target)) {
-                lowLinkMap.put(function, Math.min(lowLinkMap.get(function), indexMap.get(target)));
-            }
-        }
-
-        if (lowLinkMap.get(function).equals(indexMap.get(function))) {
-            var scc = new HashSet<Integer>();
-            int fn;
-            do {
-                fn = stack.pop();
-                onStack.remove(fn);
-                scc.add(fn);
-            } while (fn != function);
-            sccs.add(scc);
         }
     }
 }

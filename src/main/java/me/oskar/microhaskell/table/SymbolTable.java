@@ -8,7 +8,6 @@ public class SymbolTable {
     private final SymbolTable parent;
     private final Map<String, Entry> symbols = new HashMap<>();
     private final Map<String, OperatorEntry> operators = new HashMap<>();
-    private final Map<Integer, FunctionEntry> functions = new HashMap<>();
 
     public SymbolTable(SymbolTable parent) {
         this.parent = parent;
@@ -54,10 +53,6 @@ public class SymbolTable {
         }
 
         symbols.put(name, entry);
-
-        if (entry instanceof FunctionEntry fe) {
-            functions.put(fe.getDispatchId(), fe);
-        }
     }
 
     public void remove(String name) {
@@ -88,18 +83,6 @@ public class SymbolTable {
         }
 
         return entry;
-    }
-
-    public FunctionEntry lookupFunctionByDispatchId(int dispatchId) {
-        if (functions.containsKey(dispatchId)) {
-            return functions.get(dispatchId);
-        }
-
-        if (parent != null) {
-            return parent.lookupFunctionByDispatchId(dispatchId);
-        }
-
-        return null;
     }
 
     public boolean isDefined(String name) {

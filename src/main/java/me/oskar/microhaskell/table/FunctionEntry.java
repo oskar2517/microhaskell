@@ -9,11 +9,17 @@ public class FunctionEntry implements Entry {
     private final int dispatchId;
     private FunctionDefinitionNode node;
 
+    private final SymbolTable ownerTable;
     private final SymbolTable localTable;
 
-    public FunctionEntry(SymbolTable localTable, int dispatchId) {
+    public FunctionEntry(SymbolTable ownerTable, SymbolTable localTable, int dispatchId) {
+        this.ownerTable = ownerTable;
         this.localTable = localTable;
         this.dispatchId = dispatchId;
+    }
+
+    public SymbolTable getOwnerTable() {
+        return ownerTable;
     }
 
     public SymbolTable getLocalTable() {
