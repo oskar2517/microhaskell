@@ -7,14 +7,9 @@ import java.util.List;
 
 public class FunctionDefinitionNode extends Node implements FunctionNode {
 
-    private static int dispatchCounter = 0;
-
     private final String name;
     private final List<AtomicExpressionNode> parameters;
     private final ExpressionNode body;
-
-    @Node.NoProperty
-    private final int dispatchId;
 
     public FunctionDefinitionNode(Span span, String name, List<AtomicExpressionNode> parameters, ExpressionNode body) {
         super(span);
@@ -22,18 +17,6 @@ public class FunctionDefinitionNode extends Node implements FunctionNode {
         this.name = name;
         this.parameters = parameters;
         this.body = body;
-        dispatchId = dispatchCounter++;
-    }
-
-    public FunctionDefinitionNode(Span span, String name, List<AtomicExpressionNode> parameters,
-                                  ExpressionNode body, int dispatchId) {
-
-        super(span);
-
-        this.name = name;
-        this.parameters = parameters;
-        this.body = body;
-        this.dispatchId = dispatchId;
     }
 
     public String getName() {
@@ -48,10 +31,6 @@ public class FunctionDefinitionNode extends Node implements FunctionNode {
     @Override
     public ExpressionNode getBody() {
         return body;
-    }
-
-    public int getDispatchId() {
-        return dispatchId;
     }
 
     @Override

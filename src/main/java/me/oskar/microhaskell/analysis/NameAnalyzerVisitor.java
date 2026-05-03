@@ -54,7 +54,7 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
 
         functionDefinitionNode.getBody().accept(localNameAnalyzerVisitor);
 
-        var functionEntry = new FunctionEntry(symbolTable, localTable, functionDefinitionNode.getDispatchId());
+        var functionEntry = new FunctionEntry(symbolTable, localTable);
 
         symbolTable.enter(functionDefinitionNode.getName(), functionEntry, () -> {
             throw error.redefinitionAsFunction(functionDefinitionNode);

@@ -102,7 +102,7 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
             dispatchedLambdaBodies.put(entry.getDispatchId(), body);
 
             return new Application(new Variable(MUTUAL_DISPATCHER_NAME),
-                    new IntLiteral(functionDefinitionNode.getDispatchId()));
+                    new IntLiteral(entry.getDispatchId()));
         }
 
         if (entry.isAppliedSelfRecursively()) {

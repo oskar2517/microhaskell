@@ -4,6 +4,8 @@ import me.oskar.microhaskell.ast.FunctionDefinitionNode;
 
 public class FunctionEntry implements Entry {
 
+    private static int dispatchIdCounter = 0;
+
     private boolean appliedSelfRecursively = false;
     private boolean appliedMutuallyRecursively = false;
     private final int dispatchId;
@@ -12,10 +14,11 @@ public class FunctionEntry implements Entry {
     private final SymbolTable ownerTable;
     private final SymbolTable localTable;
 
-    public FunctionEntry(SymbolTable ownerTable, SymbolTable localTable, int dispatchId) {
+    public FunctionEntry(SymbolTable ownerTable, SymbolTable localTable) {
         this.ownerTable = ownerTable;
         this.localTable = localTable;
-        this.dispatchId = dispatchId;
+
+        dispatchId = dispatchIdCounter++;
     }
 
     public SymbolTable getOwnerTable() {
