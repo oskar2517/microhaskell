@@ -1,9 +1,6 @@
 package me.oskar.microhaskell.error;
 
-import me.oskar.microhaskell.ast.AtomicExpressionNode;
-import me.oskar.microhaskell.ast.FixityNode;
-import me.oskar.microhaskell.ast.BindingNode;
-import me.oskar.microhaskell.ast.IdentifierNode;
+import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.lexer.Token;
 
 public class Error {
@@ -50,5 +47,12 @@ public class Error {
 
     public MainBindingMissingError mainBindingMissing() {
         return new MainBindingMissingError(code, filename);
+    }
+
+    public NonAssociativeOperatorInInfixExpressionError nonAssociativeOperatorInInfixExpression(
+            ExpressionNode expression,
+            String operatorName
+    ) {
+        return new NonAssociativeOperatorInInfixExpressionError(code, filename, expression, operatorName);
     }
 }

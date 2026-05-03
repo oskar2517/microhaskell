@@ -2,6 +2,7 @@ package me.oskar.microhaskell.parser;
 
 import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.ast.visitor.AstRewriterVisitor;
+import me.oskar.microhaskell.error.Error;
 import me.oskar.microhaskell.position.Span;
 import me.oskar.microhaskell.table.FixityEntry;
 import me.oskar.microhaskell.table.SymbolTable;
@@ -13,13 +14,17 @@ public class ExpressionRewriterVisitor extends AstRewriterVisitor {
     private record OperatorInfo(String name, int precedence, FixityEntry.Associativity associativity) {
     }
 
-    public ExpressionRewriterVisitor(SymbolTable symbolTable) {
+    private final Error error;
+
+    public ExpressionRewriterVisitor(SymbolTable symbolTable, Error error) {
         super(symbolTable);
+
+        this.error = error;
     }
 
     @Override
     protected AstRewriterVisitor createInstance(SymbolTable localTable) {
-        return new ExpressionRewriterVisitor(localTable);
+        return new ExpressionRewriterVisitor(localTable, error);
     }
 
     @Override
@@ -43,7 +48,8 @@ public class ExpressionRewriterVisitor extends AstRewriterVisitor {
                         fixityEntry.associativity()
                 );
 
-                while (!operatorStack.isEmpty() && hasPrecedence(operatorStack.peek(), operatorInfo)) {
+                while (!operatorStack.isEmpty()
+                        && hasPrecedence(operatorStack.peek(), operatorInfo, flatExpressionNode)) {
                     reduce(operandStack, operatorStack.pop());
                 }
                 operatorStack.push(operatorInfo);
@@ -57,13 +63,13 @@ public class ExpressionRewriterVisitor extends AstRewriterVisitor {
         return operandStack.pop();
     }
 
-    private boolean hasPrecedence(OperatorInfo op1, OperatorInfo op2) {
+    private boolean hasPrecedence(OperatorInfo op1, OperatorInfo op2, ExpressionNode expression) {
         if (op1.precedence() > op2.precedence()) return true;
         if (op1.precedence() < op2.precedence()) return false;
 
         var assoc = op1.associativity();
         if (assoc == FixityEntry.Associativity.NONE) {
-            throw new IllegalStateException("Operator has no associativity: %s".formatted(op1.name));
+            throw error.nonAssociativeOperatorInInfixExpression(expression, op1.name);
         }
 
         return assoc == FixityEntry.Associativity.LEFT;

@@ -27,7 +27,7 @@ public class Main {
         var nameAnalyzer = new NameAnalyzerVisitor(symbolTable, error);
         ast.accept(nameAnalyzer);
 
-        var astRewriterVisitor = new ExpressionRewriterVisitor(symbolTable);
+        var astRewriterVisitor = new ExpressionRewriterVisitor(symbolTable, error);
         ast = (ProgramNode) ast.accept(astRewriterVisitor);
 
         var semanticAnalyzer = new SemanticAnalyzerVisitor(symbolTable, error);
