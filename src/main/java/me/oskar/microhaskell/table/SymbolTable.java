@@ -6,8 +6,8 @@ import java.util.Map;
 public class SymbolTable {
 
     private final SymbolTable parent;
-    private final Map<String, Entry> symbols = new HashMap<>();
-    private final Map<String, OperatorEntry> operators = new HashMap<>();
+    private final Map<String, Entry> functions = new HashMap<>();
+    private final Map<String, FixityEntry> fixities = new HashMap<>();
 
     public SymbolTable(SymbolTable parent) {
         this.parent = parent;
@@ -17,66 +17,66 @@ public class SymbolTable {
         this(null);
     }
 
-    public void enterOperator(String name, OperatorEntry entry, Runnable error) {
-        if (operators.containsKey(name)) {
+    public void enterFixity(String name, FixityEntry entry, Runnable error) {
+        if (fixities.containsKey(name)) {
             error.run();
         }
 
-        operators.put(name, entry);
+        fixities.put(name, entry);
     }
 
-    public void enterOperator(String name, OperatorEntry entry) {
-        enterOperator(name, entry, () -> {});
+    public void enterFixity(String name, FixityEntry entry) {
+        enterFixity(name, entry, () -> {});
     }
 
-    public OperatorEntry lookupOperator(String name) {
-        if (operators.containsKey(name)) {
-            return operators.get(name);
+    public FixityEntry lookupFixity(String name) {
+        if (fixities.containsKey(name)) {
+            return fixities.get(name);
         }
 
         if (parent != null) {
-            return parent.lookupOperator(name);
+            return parent.lookupFixity(name);
         }
 
-        return new OperatorEntry(OperatorEntry.Associativity.LEFT, 9);
+        return new FixityEntry(FixityEntry.Associativity.LEFT, 9);
     }
 
-    public void enter(String name, Entry entry) {
-        enter(name, entry, () -> {});
+    public void enterFunction(String name, Entry entry) {
+        enterFunction(name, entry, () -> {});
     }
 
-    public void enter(String name, Entry entry, Runnable error) {
+    public void enterFunction(String name, Entry entry, Runnable error) {
         if (name.equals("_")) return;
 
-        if (symbols.containsKey(name)) {
+        if (functions.containsKey(name)) {
             error.run();
         }
 
-        symbols.put(name, entry);
+        functions.put(name, entry);
     }
 
-    public void remove(String name) {
-        if (symbols.containsKey(name)) {
-            symbols.remove(name);
+    public void removeFunction(String name) {
+        if (functions.containsKey(name)) {
+            functions.remove(name);
         } else if (parent != null) {
-            parent.remove(name);
+            parent.removeFunction(name);
         }
     }
 
-    public Entry lookup(String name) {
-        if (symbols.containsKey(name)) {
-            return symbols.get(name);
+    public Entry lookupFunction(String name) {
+        if (functions.containsKey(name)) {
+            return functions.get(name);
         }
 
         if (parent != null) {
-            return parent.lookup(name);
+            return parent.lookupFunction(name);
         }
 
         return null;
     }
 
-    public Entry lookup(String name, Runnable error) {
-        var entry = lookup(name);
+    public Entry lookupFunction(String name, Runnable error) {
+        var entry = lookupFunction(name);
 
         if (entry == null) {
             error.run();
@@ -85,8 +85,8 @@ public class SymbolTable {
         return entry;
     }
 
-    public boolean isDefined(String name) {
-        return lookup(name) != null;
+    public boolean isFunctionDefined(String name) {
+        return lookupFunction(name) != null;
     }
 
     @Override
@@ -95,7 +95,7 @@ public class SymbolTable {
 
         sb.append("SymbolTable:%n".formatted());
 
-        for (var e : symbols.entrySet()) {
+        for (var e : functions.entrySet()) {
             sb.append("%s -> %s%n".formatted(e.getKey(), e.getValue()));
         }
 

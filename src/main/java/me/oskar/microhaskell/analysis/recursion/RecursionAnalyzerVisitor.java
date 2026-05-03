@@ -39,7 +39,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(FunctionDefinitionNode functionDefinitionNode) {
-        var entry = (FunctionEntry) symbolTable.lookup(functionDefinitionNode.getName());
+        var entry = (FunctionEntry) symbolTable.lookupFunction(functionDefinitionNode.getName());
 
         var functionApplications = new HashSet<FunctionEntry>();
         var localAnalyzer = new RecursionAnalyzerVisitor(entry.getLocalTable(), applicationGraph, functionApplications);
@@ -110,7 +110,7 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
     public Void visit(IdentifierNode identifierNode) {
         if (currentApplications == null) return null; // Top-level or untracked context
 
-        var entry = symbolTable.lookup(identifierNode.getName());
+        var entry = symbolTable.lookupFunction(identifierNode.getName());
         if (entry instanceof FunctionEntry fe) {
             currentApplications.add(fe);
         }

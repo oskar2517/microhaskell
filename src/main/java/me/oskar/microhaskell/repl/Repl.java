@@ -122,7 +122,7 @@ public class Repl {
                 return false;
             }).findFirst();
             mainFunction.ifPresent(node -> program.getBindings().remove(node));
-            symbolTable.remove("main");
+            symbolTable.removeFunction("main");
         }
     }
 

@@ -3,14 +3,14 @@ package me.oskar.microhaskell.parser;
 import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.ast.visitor.AstRewriterVisitor;
 import me.oskar.microhaskell.position.Span;
-import me.oskar.microhaskell.table.OperatorEntry;
+import me.oskar.microhaskell.table.FixityEntry;
 import me.oskar.microhaskell.table.SymbolTable;
 
 import java.util.*;
 
 public class ExpressionRewriterVisitor extends AstRewriterVisitor {
 
-    private record OperatorInfo(String name, int precedence, OperatorEntry.Associativity associativity) {
+    private record OperatorInfo(String name, int precedence, FixityEntry.Associativity associativity) {
     }
 
     public ExpressionRewriterVisitor(SymbolTable symbolTable) {
@@ -36,11 +36,11 @@ public class ExpressionRewriterVisitor extends AstRewriterVisitor {
                 operandStack.push(n.accept(this));
             } else {
                 var operatorName = ((FlatExpressionNode.Operator) e).name();
-                var operatorEntry = symbolTable.lookupOperator(operatorName);
+                var operatorEntry = symbolTable.lookupFixity(operatorName);
                 var operatorInfo = new OperatorInfo(
                         operatorName,
-                        operatorEntry.getPrecedence(),
-                        operatorEntry.getAssociativity()
+                        operatorEntry.precedence(),
+                        operatorEntry.associativity()
                 );
 
                 while (!operatorStack.isEmpty() && hasPrecedence(operatorStack.peek(), operatorInfo)) {
@@ -62,11 +62,11 @@ public class ExpressionRewriterVisitor extends AstRewriterVisitor {
         if (op1.precedence() < op2.precedence()) return false;
 
         var assoc = op1.associativity();
-        if (assoc == OperatorEntry.Associativity.NONE) {
+        if (assoc == FixityEntry.Associativity.NONE) {
             throw new IllegalStateException("Operator has no associativity: %s".formatted(op1.name));
         }
 
-        return assoc == OperatorEntry.Associativity.LEFT;
+        return assoc == FixityEntry.Associativity.LEFT;
     }
 
     private void reduce(Deque<Node> operandStack, OperatorInfo opEntry) {

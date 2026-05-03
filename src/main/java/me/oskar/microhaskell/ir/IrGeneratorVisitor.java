@@ -2,7 +2,6 @@ package me.oskar.microhaskell.ir;
 
 import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.ast.visitor.BaseVisitor;
-import me.oskar.microhaskell.error.CompileTimeError;
 import me.oskar.microhaskell.error.Error;
 import me.oskar.microhaskell.evaluation.expression.*;
 import me.oskar.microhaskell.table.FunctionEntry;
@@ -85,7 +84,7 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
 
     @Override
     public Expression visit(FunctionDefinitionNode functionDefinitionNode) {
-        var entry = (FunctionEntry) symbolTable.lookup(functionDefinitionNode.getName());
+        var entry = (FunctionEntry) symbolTable.lookupFunction(functionDefinitionNode.getName());
 
         var localRecursionTargets = recursionTargets;
         if (entry.isAppliedSelfRecursively() || entry.isAppliedMutuallyRecursively()) {
@@ -114,7 +113,7 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
 
     @Override
     public Expression visit(IdentifierNode identifierNode) {
-        var entry = symbolTable.lookup(identifierNode.getName());
+        var entry = symbolTable.lookupFunction(identifierNode.getName());
 
         if (!(entry instanceof FunctionEntry fe)) return new Variable(identifierNode.getName());
 
@@ -157,7 +156,7 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
         for (var b : bindings) {
             if (!(b instanceof FunctionDefinitionNode fd)) continue;
 
-            var entry = (FunctionEntry) letNode.getLocalTable().lookup(fd.getName());
+            var entry = (FunctionEntry) letNode.getLocalTable().lookupFunction(fd.getName());
             entry.setNode(fd);
         }
 
@@ -177,8 +176,8 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
 
     @Override
     public Expression visit(ListLiteralNode listLiteralNode) {
-        var nilEntry = (FunctionEntry) symbolTable.lookup("nil");
-        var consEntry = (FunctionEntry) symbolTable.lookup("cons");
+        var nilEntry = (FunctionEntry) symbolTable.lookupFunction("nil");
+        var consEntry = (FunctionEntry) symbolTable.lookupFunction("cons");
 
         Expression previous = nilEntry.getNode().accept(this);
         for (var v : listLiteralNode.getValue().reversed()) {
@@ -194,7 +193,7 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
         for (var b : programNode.getBindings()) {
             if (!(b instanceof FunctionDefinitionNode fd)) continue;
 
-            var entry = (FunctionEntry) symbolTable.lookup(fd.getName());
+            var entry = (FunctionEntry) symbolTable.lookupFunction(fd.getName());
             entry.setNode(fd);
         }
 

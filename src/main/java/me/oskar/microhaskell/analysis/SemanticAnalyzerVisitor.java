@@ -2,7 +2,6 @@ package me.oskar.microhaskell.analysis;
 
 import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.ast.visitor.BaseVisitor;
-import me.oskar.microhaskell.error.CompileTimeError;
 import me.oskar.microhaskell.error.Error;
 import me.oskar.microhaskell.table.FunctionEntry;
 import me.oskar.microhaskell.table.SymbolTable;
@@ -19,7 +18,7 @@ public class SemanticAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(FixityNode fixityNode) {
-        symbolTable.lookup(fixityNode.getOperatorName(), () -> {
+        symbolTable.lookupFunction(fixityNode.getOperatorName(), () -> {
             throw error.fixitySignatureLacksBinding(fixityNode);
         });
 
@@ -28,7 +27,7 @@ public class SemanticAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(IdentifierNode identifierNode) {
-        if (symbolTable.isDefined(identifierNode.getName())) return null;
+        if (symbolTable.isFunctionDefined(identifierNode.getName())) return null;
 
         throw error.useOfUndefinedSymbol(identifierNode);
     }
@@ -53,7 +52,7 @@ public class SemanticAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(FunctionDefinitionNode functionDefinitionNode) {
-        var entry = (FunctionEntry) symbolTable.lookup(functionDefinitionNode.getName());
+        var entry = (FunctionEntry) symbolTable.lookupFunction(functionDefinitionNode.getName());
 
         var localSemanticAnalyzerVisitor = new SemanticAnalyzerVisitor(entry.getLocalTable(), error);
 

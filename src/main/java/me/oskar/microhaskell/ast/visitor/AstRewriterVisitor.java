@@ -67,7 +67,7 @@ public abstract class AstRewriterVisitor implements Visitor<Node> {
 
     @Override
     public Node visit(FunctionDefinitionNode functionDefinitionNode) {
-        var entry = (FunctionEntry) symbolTable.lookup(functionDefinitionNode.getName());
+        var entry = (FunctionEntry) symbolTable.lookupFunction(functionDefinitionNode.getName());
 
         if (symbolTable != entry.getLocalTable()) {
             var localRewriter = createInstance(entry.getLocalTable());

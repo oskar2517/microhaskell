@@ -2,10 +2,9 @@ package me.oskar.microhaskell.analysis;
 
 import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.ast.visitor.BaseVisitor;
-import me.oskar.microhaskell.error.CompileTimeError;
 import me.oskar.microhaskell.error.Error;
 import me.oskar.microhaskell.table.FunctionEntry;
-import me.oskar.microhaskell.table.OperatorEntry;
+import me.oskar.microhaskell.table.FixityEntry;
 import me.oskar.microhaskell.table.SymbolTable;
 import me.oskar.microhaskell.table.VariableEntry;
 
@@ -21,9 +20,9 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(FixityNode fixityNode) {
-        var entry = new OperatorEntry(fixityNode.getAssociativity(), fixityNode.getPrecedence());
+        var entry = new FixityEntry(fixityNode.getAssociativity(), fixityNode.getPrecedence());
 
-        symbolTable.enterOperator(fixityNode.getOperatorName(), entry, () -> {
+        symbolTable.enterFixity(fixityNode.getOperatorName(), entry, () -> {
             throw error.duplicatedFixityDeclaration(fixityNode);
         });
 
@@ -47,7 +46,7 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
         var localNameAnalyzerVisitor = new NameAnalyzerVisitor(localTable, error);
 
         for (var p : functionDefinitionNode.getParameters()) {
-            localTable.enter(((IdentifierNode) p).getName(), new VariableEntry(), () -> {
+            localTable.enterFunction(((IdentifierNode) p).getName(), new VariableEntry(), () -> {
                 throw error.redefinitionAsParameter(p);
             });
         }
@@ -56,7 +55,7 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
 
         var functionEntry = new FunctionEntry(symbolTable, localTable);
 
-        symbolTable.enter(functionDefinitionNode.getName(), functionEntry, () -> {
+        symbolTable.enterFunction(functionDefinitionNode.getName(), functionEntry, () -> {
             throw error.redefinitionAsFunction(functionDefinitionNode);
         });
 
@@ -102,7 +101,7 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
         var localNameAnalyzerVisitor = new NameAnalyzerVisitor(localTable, error);
 
         for (var p : anonymousFunctionNode.getParameters()) {
-            localTable.enter(((IdentifierNode) p).getName(), new VariableEntry(), () -> {
+            localTable.enterFunction(((IdentifierNode) p).getName(), new VariableEntry(), () -> {
                 throw error.redefinitionAsParameter(p);
             });
         }

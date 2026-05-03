@@ -2,15 +2,15 @@ package me.oskar.microhaskell.ast;
 
 import me.oskar.microhaskell.ast.visitor.Visitor;
 import me.oskar.microhaskell.position.Span;
-import me.oskar.microhaskell.table.OperatorEntry;
+import me.oskar.microhaskell.table.FixityEntry;
 
 public class FixityNode extends Node {
 
-    private final OperatorEntry.Associativity associativity;
+    private final FixityEntry.Associativity associativity;
     private final int precedence;
     private final String operatorName;
 
-    public FixityNode(Span span, OperatorEntry.Associativity associativity, int precedence,String operatorName) {
+    public FixityNode(Span span, FixityEntry.Associativity associativity, int precedence, String operatorName) {
         super(span);
 
         this.associativity = associativity;
@@ -18,7 +18,7 @@ public class FixityNode extends Node {
         this.operatorName = operatorName;
     }
 
-    public OperatorEntry.Associativity getAssociativity() {
+    public FixityEntry.Associativity getAssociativity() {
         return associativity;
     }
 

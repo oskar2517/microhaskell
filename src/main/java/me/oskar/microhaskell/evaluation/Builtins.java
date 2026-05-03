@@ -3,7 +3,7 @@ package me.oskar.microhaskell.evaluation;
 import me.oskar.microhaskell.evaluation.expression.BuiltinFunction;
 import me.oskar.microhaskell.evaluation.expression.Expression;
 import me.oskar.microhaskell.evaluation.expression.IntLiteral;
-import me.oskar.microhaskell.table.OperatorEntry;
+import me.oskar.microhaskell.table.FixityEntry;
 import me.oskar.microhaskell.table.SymbolTable;
 import me.oskar.microhaskell.table.VariableEntry;
 
@@ -21,8 +21,8 @@ public class Builtins {
 
             return new IntLiteral(arg1.value() + arg2.value());
         }));
-        symbolTable.enter("+", new VariableEntry());
-        symbolTable.enterOperator("+", new OperatorEntry(OperatorEntry.Associativity.LEFT, 6));
+        symbolTable.enterFunction("+", new VariableEntry());
+        symbolTable.enterFixity("+", new FixityEntry(FixityEntry.Associativity.LEFT, 6));
 
         env.put("-", BuiltinFunction.of(2, args -> {
             var arg1 = (IntLiteral) args.getFirst().evaluate(env);
@@ -30,8 +30,8 @@ public class Builtins {
 
             return new IntLiteral(arg1.value() - arg2.value());
         }));
-        symbolTable.enter("-", new VariableEntry());
-        symbolTable.enterOperator("-", new OperatorEntry(OperatorEntry.Associativity.LEFT, 6));
+        symbolTable.enterFunction("-", new VariableEntry());
+        symbolTable.enterFixity("-", new FixityEntry(FixityEntry.Associativity.LEFT, 6));
 
         env.put("*", BuiltinFunction.of(2, args -> {
             var arg1 = (IntLiteral) args.getFirst().evaluate(env);
@@ -39,8 +39,8 @@ public class Builtins {
 
             return new IntLiteral(arg1.value() * arg2.value());
         }));
-        symbolTable.enter("*", new VariableEntry());
-        symbolTable.enterOperator("*", new OperatorEntry(OperatorEntry.Associativity.LEFT, 7));
+        symbolTable.enterFunction("*", new VariableEntry());
+        symbolTable.enterFixity("*", new FixityEntry(FixityEntry.Associativity.LEFT, 7));
 
         env.put("div", BuiltinFunction.of(2, args -> {
             var arg1 = (IntLiteral) args.getFirst().evaluate(env);
@@ -48,8 +48,8 @@ public class Builtins {
 
             return new IntLiteral(arg1.value() / arg2.value());
         }));
-        symbolTable.enter("div", new VariableEntry());
-        symbolTable.enterOperator("div", new OperatorEntry(OperatorEntry.Associativity.LEFT, 7));
+        symbolTable.enterFunction("div", new VariableEntry());
+        symbolTable.enterFixity("div", new FixityEntry(FixityEntry.Associativity.LEFT, 7));
 
         env.put("==", BuiltinFunction.of(2, args -> {
             var arg1 = (IntLiteral) args.getFirst().evaluate(env);
@@ -57,8 +57,8 @@ public class Builtins {
 
             return new IntLiteral(arg1.value() == arg2.value() ? 1 : 0);
         }));
-        symbolTable.enter("==", new VariableEntry());
-        symbolTable.enterOperator("==", new OperatorEntry(OperatorEntry.Associativity.NONE, 4));
+        symbolTable.enterFunction("==", new VariableEntry());
+        symbolTable.enterFixity("==", new FixityEntry(FixityEntry.Associativity.NONE, 4));
 
         env.put("/=", BuiltinFunction.of(2, args -> {
             var arg1 = (IntLiteral) args.getFirst().evaluate(env);
@@ -66,8 +66,8 @@ public class Builtins {
 
             return new IntLiteral(arg1.value() != arg2.value() ? 1 : 0);
         }));
-        symbolTable.enter("/=", new VariableEntry());
-        symbolTable.enterOperator("/=", new OperatorEntry(OperatorEntry.Associativity.NONE, 4));
+        symbolTable.enterFunction("/=", new VariableEntry());
+        symbolTable.enterFixity("/=", new FixityEntry(FixityEntry.Associativity.NONE, 4));
 
         env.put("<=", BuiltinFunction.of(2, args -> {
             var arg1 = (IntLiteral) args.getFirst().evaluate(env);
@@ -75,8 +75,8 @@ public class Builtins {
 
             return new IntLiteral(arg1.value() <= arg2.value() ? 1 : 0);
         }));
-        symbolTable.enter("<=", new VariableEntry());
-        symbolTable.enterOperator("<=", new OperatorEntry(OperatorEntry.Associativity.NONE, 4));
+        symbolTable.enterFunction("<=", new VariableEntry());
+        symbolTable.enterFixity("<=", new FixityEntry(FixityEntry.Associativity.NONE, 4));
 
         env.put("<", BuiltinFunction.of(2, args -> {
             var arg1 = (IntLiteral) args.getFirst().evaluate(env);
@@ -84,8 +84,8 @@ public class Builtins {
 
             return new IntLiteral(arg1.value() < arg2.value() ? 1 : 0);
         }));
-        symbolTable.enter("<", new VariableEntry());
-        symbolTable.enterOperator("<", new OperatorEntry(OperatorEntry.Associativity.NONE, 4));
+        symbolTable.enterFunction("<", new VariableEntry());
+        symbolTable.enterFixity("<", new FixityEntry(FixityEntry.Associativity.NONE, 4));
 
         env.put(">=", BuiltinFunction.of(2, args -> {
             var arg1 = (IntLiteral) args.getFirst().evaluate(env);
@@ -93,8 +93,8 @@ public class Builtins {
 
             return new IntLiteral(arg1.value() >= arg2.value() ? 1 : 0);
         }));
-        symbolTable.enter(">=", new VariableEntry());
-        symbolTable.enterOperator(">=", new OperatorEntry(OperatorEntry.Associativity.NONE, 4));
+        symbolTable.enterFunction(">=", new VariableEntry());
+        symbolTable.enterFixity(">=", new FixityEntry(FixityEntry.Associativity.NONE, 4));
 
         env.put(">", BuiltinFunction.of(2, args -> {
             var arg1 = (IntLiteral) args.getFirst().evaluate(env);
@@ -102,8 +102,8 @@ public class Builtins {
 
             return new IntLiteral(arg1.value() > arg2.value() ? 1 : 0);
         }));
-        symbolTable.enter(">", new VariableEntry());
-        symbolTable.enterOperator(">", new OperatorEntry(OperatorEntry.Associativity.NONE, 4));
+        symbolTable.enterFunction(">", new VariableEntry());
+        symbolTable.enterFixity(">", new FixityEntry(FixityEntry.Associativity.NONE, 4));
 
         env.put("if", BuiltinFunction.of(3, args -> {
             var condition = (IntLiteral) args.getFirst().evaluate(env);
@@ -115,7 +115,7 @@ public class Builtins {
                 return alternative.evaluate(env);
             }
         }));
-        symbolTable.enter("if", new VariableEntry());
+        symbolTable.enterFunction("if", new VariableEntry());
 
         return env;
     }

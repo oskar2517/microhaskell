@@ -2,12 +2,11 @@ package me.oskar.microhaskell.parser;
 
 import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.error.Error;
-import me.oskar.microhaskell.error.CompileTimeError;
 import me.oskar.microhaskell.lexer.Lexer;
 import me.oskar.microhaskell.lexer.Token;
 import me.oskar.microhaskell.lexer.TokenType;
 import me.oskar.microhaskell.position.Span;
-import me.oskar.microhaskell.table.OperatorEntry;
+import me.oskar.microhaskell.table.FixityEntry;
 
 import java.util.ArrayList;
 
@@ -75,9 +74,9 @@ public class Parser {
         var startPosition = currentToken.span().start();
 
         var associativity = switch (currentToken.type()) {
-            case INFIX -> OperatorEntry.Associativity.NONE;
-            case INFIX_L -> OperatorEntry.Associativity.LEFT;
-            case INFIX_R -> OperatorEntry.Associativity.RIGHT;
+            case INFIX -> FixityEntry.Associativity.NONE;
+            case INFIX_L -> FixityEntry.Associativity.LEFT;
+            case INFIX_R -> FixityEntry.Associativity.RIGHT;
             default -> throw error.unexpectedToken(currentToken, "`%s`".formatted(currentToken));
         };
 
