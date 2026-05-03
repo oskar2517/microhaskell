@@ -12,7 +12,7 @@ public interface Visitor<T> {
 
     T visit(FunctionApplicationNode functionApplicationNode);
 
-    T visit(FunctionDefinitionNode functionDefinitionNode);
+    T visit(BindingNode bindingNode);
 
     T visit(IdentifierNode identifierNode);
 

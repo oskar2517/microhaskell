@@ -5,13 +5,13 @@ import me.oskar.microhaskell.position.Span;
 
 import java.util.List;
 
-public class FunctionDefinitionNode extends Node implements FunctionNode {
+public class BindingNode extends Node implements FunctionNode {
 
     private final String name;
     private final List<AtomicExpressionNode> parameters;
     private final ExpressionNode body;
 
-    public FunctionDefinitionNode(Span span, String name, List<AtomicExpressionNode> parameters, ExpressionNode body) {
+    public BindingNode(Span span, String name, List<AtomicExpressionNode> parameters, ExpressionNode body) {
         super(span);
 
         this.name = name;

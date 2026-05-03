@@ -1,7 +1,7 @@
 package me.oskar.microhaskell.repl;
 
 import me.oskar.microhaskell.Main;
-import me.oskar.microhaskell.ast.FunctionDefinitionNode;
+import me.oskar.microhaskell.ast.BindingNode;
 import me.oskar.microhaskell.ast.ProgramNode;
 import me.oskar.microhaskell.error.CompileTimeError;
 import me.oskar.microhaskell.error.Error;
@@ -114,14 +114,14 @@ public class Repl {
             e.printError();
             return null;
         } finally {
-            var mainFunction = program.getBindings().stream().filter(b -> {
-                if (b instanceof FunctionDefinitionNode fd) {
-                    return fd.getName().equals("main");
+            var mainFunction = program.getDeclarations().stream().filter(d -> {
+                if (d instanceof BindingNode b) {
+                    return b.getName().equals("main");
                 }
 
                 return false;
             }).findFirst();
-            mainFunction.ifPresent(node -> program.getBindings().remove(node));
+            mainFunction.ifPresent(node -> program.getDeclarations().remove(node));
             symbolTable.removeFunction("main");
         }
     }

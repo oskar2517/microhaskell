@@ -66,23 +66,23 @@ public abstract class AstRewriterVisitor implements Visitor<Node> {
     }
 
     @Override
-    public Node visit(FunctionDefinitionNode functionDefinitionNode) {
-        var entry = (FunctionEntry) symbolTable.lookupFunction(functionDefinitionNode.getName());
+    public Node visit(BindingNode bindingNode) {
+        var entry = (FunctionEntry) symbolTable.lookupFunction(bindingNode.getName());
 
         if (symbolTable != entry.getLocalTable()) {
             var localRewriter = createInstance(entry.getLocalTable());
-            return functionDefinitionNode.accept(localRewriter);
+            return bindingNode.accept(localRewriter);
         }
 
         var parameters = new ArrayList<AtomicExpressionNode>();
 
-        for (var p : functionDefinitionNode.getParameters()) {
+        for (var p : bindingNode.getParameters()) {
             parameters.add((AtomicExpressionNode) p.accept(this));
         }
 
-        var body = (ExpressionNode) functionDefinitionNode.getBody().accept(this);
+        var body = (ExpressionNode) bindingNode.getBody().accept(this);
 
-        return new FunctionDefinitionNode(functionDefinitionNode.getSpan(), functionDefinitionNode.getName(),
+        return new BindingNode(bindingNode.getSpan(), bindingNode.getName(),
                 parameters, body);
     }
 
@@ -114,7 +114,7 @@ public abstract class AstRewriterVisitor implements Visitor<Node> {
 
         var bindings = new ArrayList<Node>();
 
-        for (var b : letNode.getBindings()) {
+        for (var b : letNode.getDeclarations()) {
             bindings.add(b.accept(this));
         }
 
@@ -141,7 +141,7 @@ public abstract class AstRewriterVisitor implements Visitor<Node> {
     public Node visit(ProgramNode programNode) {
         var bindings = new ArrayList<Node>();
 
-        for (var b : programNode.getBindings()) {
+        for (var b : programNode.getDeclarations()) {
             bindings.add(b.accept(this));
         }
 

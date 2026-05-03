@@ -41,22 +41,22 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
     }
 
     @Override
-    public Void visit(FunctionDefinitionNode functionDefinitionNode) {
+    public Void visit(BindingNode bindingNode) {
         var localTable = new SymbolTable(symbolTable);
         var localNameAnalyzerVisitor = new NameAnalyzerVisitor(localTable, error);
 
-        for (var p : functionDefinitionNode.getParameters()) {
+        for (var p : bindingNode.getParameters()) {
             localTable.enterFunction(((IdentifierNode) p).getName(), new VariableEntry(), () -> {
                 throw error.redefinitionAsParameter(p);
             });
         }
 
-        functionDefinitionNode.getBody().accept(localNameAnalyzerVisitor);
+        bindingNode.getBody().accept(localNameAnalyzerVisitor);
 
         var functionEntry = new FunctionEntry(symbolTable, localTable);
 
-        symbolTable.enterFunction(functionDefinitionNode.getName(), functionEntry, () -> {
-            throw error.redefinitionAsFunction(functionDefinitionNode);
+        symbolTable.enterFunction(bindingNode.getName(), functionEntry, () -> {
+            throw error.redefinitionAsBinding(bindingNode);
         });
 
         return null;
@@ -76,8 +76,8 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
         var localTable = new SymbolTable(symbolTable);
         var localNameAnalyzerVisitor = new NameAnalyzerVisitor(localTable, error);
 
-        for (var b : letNode.getBindings()) {
-            b.accept(localNameAnalyzerVisitor);
+        for (var d : letNode.getDeclarations()) {
+            d.accept(localNameAnalyzerVisitor);
         }
 
         letNode.getExpression().accept(localNameAnalyzerVisitor);
@@ -124,8 +124,8 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(ProgramNode programNode) {
-        for (var b : programNode.getBindings()) {
-            b.accept(this);
+        for (var d : programNode.getDeclarations()) {
+            d.accept(this);
         }
 
         return null;

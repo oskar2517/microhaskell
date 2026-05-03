@@ -28,8 +28,8 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(ProgramNode programNode) {
-        for (var b : programNode.getBindings()) {
-            b.accept(this);
+        for (var d : programNode.getDeclarations()) {
+            d.accept(this);
         }
 
         detectRecursionInCurrentScope();
@@ -38,13 +38,13 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
     }
 
     @Override
-    public Void visit(FunctionDefinitionNode functionDefinitionNode) {
-        var entry = (FunctionEntry) symbolTable.lookupFunction(functionDefinitionNode.getName());
+    public Void visit(BindingNode bindingNode) {
+        var entry = (FunctionEntry) symbolTable.lookupFunction(bindingNode.getName());
 
         var functionApplications = new HashSet<FunctionEntry>();
         var localAnalyzer = new RecursionAnalyzerVisitor(entry.getLocalTable(), applicationGraph, functionApplications);
 
-        functionDefinitionNode.getBody().accept(localAnalyzer);
+        bindingNode.getBody().accept(localAnalyzer);
         if (applicationGraph.put(entry, functionApplications) != null) {
             throw new IllegalStateException("Duplicated function in application graph");
         }
@@ -64,8 +64,8 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
         letNode.getExpression().accept(this);
 
-        for (var b : letNode.getBindings()) {
-            b.accept(this);
+        for (var d : letNode.getDeclarations()) {
+            d.accept(this);
         }
 
         detectRecursionInCurrentScope();

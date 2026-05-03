@@ -25,7 +25,7 @@ public abstract class BaseVisitor<T> implements Visitor<T> {
     }
 
     @Override
-    public T visit(FunctionDefinitionNode functionDefinitionNode) {
+    public T visit(BindingNode bindingNode) {
         return null;
     }
 

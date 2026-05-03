@@ -51,12 +51,12 @@ public class SemanticAnalyzerVisitor extends BaseVisitor<Void> {
     }
 
     @Override
-    public Void visit(FunctionDefinitionNode functionDefinitionNode) {
-        var entry = (FunctionEntry) symbolTable.lookupFunction(functionDefinitionNode.getName());
+    public Void visit(BindingNode bindingNode) {
+        var entry = (FunctionEntry) symbolTable.lookupFunction(bindingNode.getName());
 
         var localSemanticAnalyzerVisitor = new SemanticAnalyzerVisitor(entry.getLocalTable(), error);
 
-        functionDefinitionNode.getBody().accept(localSemanticAnalyzerVisitor);
+        bindingNode.getBody().accept(localSemanticAnalyzerVisitor);
 
         return null;
     }
@@ -65,8 +65,8 @@ public class SemanticAnalyzerVisitor extends BaseVisitor<Void> {
     public Void visit(LetNode letNode) {
         var localSemanticAnalyzerVisitor = new SemanticAnalyzerVisitor(letNode.getLocalTable(), error);
 
-        for (var b : letNode.getBindings()) {
-            b.accept(localSemanticAnalyzerVisitor);
+        for (var d : letNode.getDeclarations()) {
+            d.accept(localSemanticAnalyzerVisitor);
         }
 
         letNode.getExpression().accept(localSemanticAnalyzerVisitor);
@@ -93,8 +93,8 @@ public class SemanticAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(ProgramNode programNode) {
-        for (var b : programNode.getBindings()) {
-            b.accept(this);
+        for (var d : programNode.getDeclarations()) {
+            d.accept(this);
         }
 
         return null;

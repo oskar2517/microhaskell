@@ -50,24 +50,24 @@ public class Parser {
     public ProgramNode parse() {
         var startPosition = currentToken.span().start();
 
-        var bindings = new ArrayList<Node>();
+        var declarations = new ArrayList<Node>();
 
         while (currentToken.type() != TokenType.EOF) {
-            bindings.add(parseBinding());
+            declarations.add(parseDeclaration());
             eatToken(TokenType.SEMICOLON);
         }
 
-        return new ProgramNode(new Span(startPosition, currentToken.span().end()), bindings);
+        return new ProgramNode(new Span(startPosition, currentToken.span().end()), declarations);
     }
 
-    private Node parseBinding() {
+    private Node parseDeclaration() {
         if (currentToken.type() == TokenType.INFIX
                 || currentToken.type() == TokenType.INFIX_L
                 || currentToken.type() == TokenType.INFIX_R) {
             return parseFixity();
         }
 
-        return parseFunctionDefinition();
+        return parseBinding();
     }
 
     private FixityNode parseFixity() {
@@ -100,7 +100,7 @@ public class Parser {
                 associativity, precedence, operatorName);
     }
 
-    private FunctionDefinitionNode parseFunctionDefinition() {
+    private BindingNode parseBinding() {
         var startPosition = currentToken.span().start();
 
         var name = parseFunctionName();
@@ -114,7 +114,7 @@ public class Parser {
 
         var expression = parseExpression();
 
-        return new FunctionDefinitionNode(new Span(startPosition, expression.getSpan().end()), name,
+        return new BindingNode(new Span(startPosition, expression.getSpan().end()), name,
                 parameters, expression);
     }
 
@@ -177,17 +177,17 @@ public class Parser {
 
         eatToken(TokenType.LET);
 
-        var bindings = new ArrayList<Node>();
+        var declarations = new ArrayList<Node>();
 
         do {
-            bindings.add(parseBinding());
+            declarations.add(parseDeclaration());
         } while (matchToken(TokenType.SEMICOLON));
 
         eatToken(TokenType.IN);
 
         var expression = parseExpression();
 
-        return new LetNode(new Span(startPosition, expression.getSpan().end()), bindings, expression);
+        return new LetNode(new Span(startPosition, expression.getSpan().end()), declarations, expression);
     }
 
     private ExpressionNode parseApplication() {

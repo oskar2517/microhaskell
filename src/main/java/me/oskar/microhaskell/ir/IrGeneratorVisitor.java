@@ -83,19 +83,19 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
     }
 
     @Override
-    public Expression visit(FunctionDefinitionNode functionDefinitionNode) {
-        var entry = (FunctionEntry) symbolTable.lookupFunction(functionDefinitionNode.getName());
+    public Expression visit(BindingNode bindingNode) {
+        var entry = (FunctionEntry) symbolTable.lookupFunction(bindingNode.getName());
 
         var localRecursionTargets = recursionTargets;
         if (entry.isAppliedSelfRecursively() || entry.isAppliedMutuallyRecursively()) {
             localRecursionTargets = new HashSet<>(recursionTargets);
-            localRecursionTargets.add(functionDefinitionNode.getName());
+            localRecursionTargets.add(bindingNode.getName());
         }
 
         var localIrGeneratorVisitor = new IrGeneratorVisitor(entry.getLocalTable(), localRecursionTargets,
                 dispatchedLambdaBodies, error);
 
-        var body = generateFunctionBody(functionDefinitionNode, localIrGeneratorVisitor);
+        var body = generateFunctionBody(bindingNode, localIrGeneratorVisitor);
 
         if (entry.isAppliedMutuallyRecursively()) {
             dispatchedLambdaBodies.put(entry.getDispatchId(), body);
@@ -105,7 +105,7 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
         }
 
         if (entry.isAppliedSelfRecursively()) {
-            return new Application(Y_COMBINATOR, new Lambda(functionDefinitionNode.getName(), body));
+            return new Application(Y_COMBINATOR, new Lambda(bindingNode.getName(), body));
         }
 
         return body;
@@ -151,13 +151,13 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
             return letNode.accept(localIrGeneratorVisitor);
         }
 
-        var bindings = letNode.getBindings();
+        var declarations = letNode.getDeclarations();
 
-        for (var b : bindings) {
-            if (!(b instanceof FunctionDefinitionNode fd)) continue;
+        for (var d : declarations) {
+            if (!(d instanceof BindingNode b)) continue;
 
-            var entry = (FunctionEntry) letNode.getLocalTable().lookupFunction(fd.getName());
-            entry.setNode(fd);
+            var entry = (FunctionEntry) letNode.getLocalTable().lookupFunction(b.getName());
+            entry.setNode(b);
         }
 
         var body = letNode.getExpression().accept(this);
@@ -165,10 +165,10 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
         // NOTE: Potential optimization: Only generate binding when necessary
         // Only generate when not applied mutually recursively
         // ALso check children
-        for (var b : bindings.reversed()) {
-            if (!(b instanceof FunctionDefinitionNode fd)) continue;
+        for (var d : declarations.reversed()) {
+            if (!(d instanceof BindingNode b)) continue;
 
-            body = new Application(new Lambda(fd.getName(), body), b.accept(this));
+            body = new Application(new Lambda(b.getName(), body), d.accept(this));
         }
 
         return body;
@@ -179,7 +179,7 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
         var nilEntry = (FunctionEntry) symbolTable.lookupFunction("nil");
         var consEntry = (FunctionEntry) symbolTable.lookupFunction("cons");
 
-        Expression previous = nilEntry.getNode().accept(this);
+        var previous = nilEntry.getNode().accept(this);
         for (var v : listLiteralNode.getValue().reversed()) {
             var appliedValue = new Application(consEntry.getNode().accept(this), v.accept(this));
             previous = new Application(appliedValue, previous);
@@ -190,16 +190,16 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
 
     @Override
     public Expression visit(ProgramNode programNode) {
-        for (var b : programNode.getBindings()) {
-            if (!(b instanceof FunctionDefinitionNode fd)) continue;
+        for (var d : programNode.getDeclarations()) {
+            if (!(d instanceof BindingNode b)) continue;
 
-            var entry = (FunctionEntry) symbolTable.lookupFunction(fd.getName());
-            entry.setNode(fd);
+            var entry = (FunctionEntry) symbolTable.lookupFunction(b.getName());
+            entry.setNode(b);
         }
 
-        var main = programNode.getBindings().stream()
-                .filter(e -> e instanceof FunctionDefinitionNode)
-                .filter(b -> ((FunctionDefinitionNode) b).getName().equals("main"))
+        var main = programNode.getDeclarations().stream()
+                .filter(d -> d instanceof BindingNode)
+                .filter(b -> ((BindingNode) b).getName().equals("main"))
                 .findFirst();
 
         if (main.isEmpty()) {

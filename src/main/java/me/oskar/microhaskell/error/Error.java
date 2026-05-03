@@ -2,7 +2,7 @@ package me.oskar.microhaskell.error;
 
 import me.oskar.microhaskell.ast.AtomicExpressionNode;
 import me.oskar.microhaskell.ast.FixityNode;
-import me.oskar.microhaskell.ast.FunctionDefinitionNode;
+import me.oskar.microhaskell.ast.BindingNode;
 import me.oskar.microhaskell.ast.IdentifierNode;
 import me.oskar.microhaskell.lexer.Token;
 
@@ -40,8 +40,8 @@ public class Error {
         return new RedefinitionAsParameterError(code, filename, atomicExpressionNode);
     }
 
-    public RedefinitionAsFunctionError redefinitionAsFunction(FunctionDefinitionNode identifierNode) {
-        return new RedefinitionAsFunctionError(code, filename, identifierNode);
+    public RedefinitionAsBindingError redefinitionAsBinding(BindingNode identifierNode) {
+        return new RedefinitionAsBindingError(code, filename, identifierNode);
     }
 
     public DuplicatedFixityDeclarationError duplicatedFixityDeclaration(FixityNode fixityNode) {
