@@ -36,11 +36,11 @@ public class ExpressionRewriterVisitor extends AstRewriterVisitor {
                 operandStack.push(n.accept(this));
             } else {
                 var operatorName = ((FlatExpressionNode.Operator) e).name();
-                var operatorEntry = symbolTable.lookupFixity(operatorName);
+                var fixityEntry = symbolTable.lookupFixity(operatorName);
                 var operatorInfo = new OperatorInfo(
                         operatorName,
-                        operatorEntry.precedence(),
-                        operatorEntry.associativity()
+                        fixityEntry.precedence(),
+                        fixityEntry.associativity()
                 );
 
                 while (!operatorStack.isEmpty() && hasPrecedence(operatorStack.peek(), operatorInfo)) {
