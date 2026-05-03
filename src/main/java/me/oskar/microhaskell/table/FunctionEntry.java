@@ -8,11 +8,11 @@ public class FunctionEntry implements Entry {
 
     private boolean appliedSelfRecursively = false;
     private boolean appliedMutuallyRecursively = false;
-    private final int dispatchId;
     private FunctionDefinitionNode node;
 
     private final SymbolTable ownerTable;
     private final SymbolTable localTable;
+    private final int dispatchId;
 
     public FunctionEntry(SymbolTable ownerTable, SymbolTable localTable) {
         this.ownerTable = ownerTable;
