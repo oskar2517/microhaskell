@@ -87,10 +87,10 @@ public class Parser {
         try {
             precedence = Integer.parseInt(eatToken(TokenType.INT).lexeme());
             if (precedence < 0 || precedence > 9) {
-                throw error.invalidOperatorPrecedence(precedenceToken);
+                throw error.invalidFixityPrecedence(precedenceToken);
             }
         } catch (NumberFormatException e) {
-            throw error.invalidOperatorPrecedence(precedenceToken);
+            throw error.invalidFixityPrecedence(precedenceToken);
         }
 
         var operatorToken = currentToken;
@@ -103,7 +103,7 @@ public class Parser {
     private BindingNode parseBinding() {
         var startPosition = currentToken.span().start();
 
-        var name = parseFunctionName();
+        var name = parseBindingName();
 
         var parameters = new ArrayList<AtomicExpressionNode>();
         while (currentToken.type() != TokenType.DEFINE && currentToken.type() != TokenType.EOF) {
@@ -118,7 +118,7 @@ public class Parser {
                 parameters, expression);
     }
 
-    private String parseFunctionName() {
+    private String parseBindingName() {
         if (currentToken.type() == TokenType.IDENT) {
             return eatToken(TokenType.IDENT).lexeme();
         }
@@ -131,10 +131,10 @@ public class Parser {
             return name;
         }
 
-        throw error.invalidFunctionName(currentToken);
+        throw error.invalidBindingName(currentToken);
     }
 
-    private AnonymousFunctionNode parseAnonymousFunction() {
+    private LambdaNode parseLambda() {
         var startPosition = currentToken.span().start();
 
         eatToken(TokenType.BACKSLASH);
@@ -148,7 +148,7 @@ public class Parser {
 
         var expression = parseExpression();
 
-        return new AnonymousFunctionNode(new Span(startPosition, expression.getSpan().end()), parameters, expression);
+        return new LambdaNode(new Span(startPosition, expression.getSpan().end()), parameters, expression);
     }
 
     private ExpressionNode parseExpression() {
@@ -223,7 +223,7 @@ public class Parser {
             }
             case L_BRACK -> parseListLiteral();
             case IF -> parseIf();
-            case BACKSLASH -> parseAnonymousFunction();
+            case BACKSLASH -> parseLambda();
             case IDENT -> new IdentifierNode(span, eatToken(TokenType.IDENT).lexeme());
             case INT -> new IntLiteralNode(span, Integer.parseInt(eatToken(TokenType.INT).lexeme()));
             default -> throw error.unexpectedToken(currentToken, "expression");

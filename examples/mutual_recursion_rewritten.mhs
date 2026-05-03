@@ -1,4 +1,4 @@
--- Unified recursive function
+-- Unified recursive binding
 dispatch tag =
   if tag == 0
     then \n -> if n == 0 then 0 else dispatch 1 (n - 1)
@@ -7,7 +7,7 @@ dispatch tag =
   else -- tag == 2
     \n ->  if n == 0 then 2 else dispatch 0 (n - 1);
 
--- Named wrappers for each function
+-- Named wrappers for each branch
 f0 = dispatch 0;
 f1 = dispatch 1;
 f2 = dispatch 2;

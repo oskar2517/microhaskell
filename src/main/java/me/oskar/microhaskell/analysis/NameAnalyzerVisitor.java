@@ -3,7 +3,7 @@ package me.oskar.microhaskell.analysis;
 import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.ast.visitor.BaseVisitor;
 import me.oskar.microhaskell.error.Error;
-import me.oskar.microhaskell.table.FunctionEntry;
+import me.oskar.microhaskell.table.BindingEntry;
 import me.oskar.microhaskell.table.FixityEntry;
 import me.oskar.microhaskell.table.SymbolTable;
 import me.oskar.microhaskell.table.VariableEntry;
@@ -23,7 +23,7 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
         var entry = new FixityEntry(fixityNode.getAssociativity(), fixityNode.getPrecedence());
 
         symbolTable.enterFixity(fixityNode.getOperatorName(), entry, () -> {
-            throw error.duplicatedFixityDeclaration(fixityNode);
+            throw error.duplicateFixityDeclaration(fixityNode);
         });
 
         return null;
@@ -46,16 +46,16 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
         var localNameAnalyzerVisitor = new NameAnalyzerVisitor(localTable, error);
 
         for (var p : bindingNode.getParameters()) {
-            localTable.enterFunction(((IdentifierNode) p).getName(), new VariableEntry(), () -> {
+            localTable.enterBinding(((IdentifierNode) p).getName(), new VariableEntry(), () -> {
                 throw error.redefinitionAsParameter(p);
             });
         }
 
         bindingNode.getBody().accept(localNameAnalyzerVisitor);
 
-        var functionEntry = new FunctionEntry(symbolTable, localTable);
+        var bindingEntry = new BindingEntry(symbolTable, localTable);
 
-        symbolTable.enterFunction(bindingNode.getName(), functionEntry, () -> {
+        symbolTable.enterBinding(bindingNode.getName(), bindingEntry, () -> {
             throw error.redefinitionAsBinding(bindingNode);
         });
 
@@ -96,19 +96,19 @@ public class NameAnalyzerVisitor extends BaseVisitor<Void> {
     }
 
     @Override
-    public Void visit(AnonymousFunctionNode anonymousFunctionNode) {
+    public Void visit(LambdaNode lambdaNode) {
         var localTable = new SymbolTable(symbolTable);
         var localNameAnalyzerVisitor = new NameAnalyzerVisitor(localTable, error);
 
-        for (var p : anonymousFunctionNode.getParameters()) {
-            localTable.enterFunction(((IdentifierNode) p).getName(), new VariableEntry(), () -> {
+        for (var p : lambdaNode.getParameters()) {
+            localTable.enterBinding(((IdentifierNode) p).getName(), new VariableEntry(), () -> {
                 throw error.redefinitionAsParameter(p);
             });
         }
 
-        anonymousFunctionNode.getBody().accept(localNameAnalyzerVisitor);
+        lambdaNode.getBody().accept(localNameAnalyzerVisitor);
 
-        anonymousFunctionNode.setLocalTable(localTable);
+        lambdaNode.setLocalTable(localTable);
 
         return null;
     }

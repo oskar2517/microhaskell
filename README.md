@@ -19,20 +19,20 @@ MicroHaskell is an interpreter for a small subset of the Haskell programming lan
 
 - Lazy evaluation
 - Untyped
-- Function definitions
-- Function applications
-- Anonymous functions (Lambdas)
+- Bindings
+- Function application
+- Lambda expressions
 - Lists (Church-encoded)
 - Currying
 - Recursive binding
 - Basic arithmetic and conditionals
 - Let bindings
-- Custom operators
+- Custom operators and fixity declarations
 - REPL with syntax highlighting
 
 ## Example
 
-The following example demonstrates recursive function definitions, arithmetic, currying, and higher-order functions in MicroHaskell:
+The following example demonstrates recursive bindings, arithmetic, currying, and higher-order functions in MicroHaskell:
 
 ```haskell
 -- Calculates the factorial of n

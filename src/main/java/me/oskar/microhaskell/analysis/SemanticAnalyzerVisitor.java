@@ -3,7 +3,7 @@ package me.oskar.microhaskell.analysis;
 import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.ast.visitor.BaseVisitor;
 import me.oskar.microhaskell.error.Error;
-import me.oskar.microhaskell.table.FunctionEntry;
+import me.oskar.microhaskell.table.BindingEntry;
 import me.oskar.microhaskell.table.SymbolTable;
 
 public class SemanticAnalyzerVisitor extends BaseVisitor<Void> {
@@ -18,8 +18,8 @@ public class SemanticAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(FixityNode fixityNode) {
-        symbolTable.lookupFunction(fixityNode.getOperatorName(), () -> {
-            throw error.fixitySignatureLacksBinding(fixityNode);
+        symbolTable.lookupBinding(fixityNode.getOperatorName(), () -> {
+            throw error.fixityDeclarationLacksBinding(fixityNode);
         });
 
         return null;
@@ -27,7 +27,7 @@ public class SemanticAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(IdentifierNode identifierNode) {
-        if (symbolTable.isFunctionDefined(identifierNode.getName())) return null;
+        if (symbolTable.isBindingDefined(identifierNode.getName())) return null;
 
         throw error.useOfUndefinedSymbol(identifierNode);
     }
@@ -42,17 +42,17 @@ public class SemanticAnalyzerVisitor extends BaseVisitor<Void> {
     }
 
     @Override
-    public Void visit(AnonymousFunctionNode anonymousFunctionNode) {
-        var localSemanticAnalyzerVisitor = new SemanticAnalyzerVisitor(anonymousFunctionNode.getLocalTable(), error);
+    public Void visit(LambdaNode lambdaNode) {
+        var localSemanticAnalyzerVisitor = new SemanticAnalyzerVisitor(lambdaNode.getLocalTable(), error);
 
-        anonymousFunctionNode.getBody().accept(localSemanticAnalyzerVisitor);
+        lambdaNode.getBody().accept(localSemanticAnalyzerVisitor);
 
         return null;
     }
 
     @Override
     public Void visit(BindingNode bindingNode) {
-        var entry = (FunctionEntry) symbolTable.lookupFunction(bindingNode.getName());
+        var entry = (BindingEntry) symbolTable.lookupBinding(bindingNode.getName());
 
         var localSemanticAnalyzerVisitor = new SemanticAnalyzerVisitor(entry.getLocalTable(), error);
 

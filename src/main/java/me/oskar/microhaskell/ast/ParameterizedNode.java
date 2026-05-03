@@ -2,7 +2,7 @@ package me.oskar.microhaskell.ast;
 
 import java.util.List;
 
-public interface FunctionNode {
+public interface ParameterizedNode {
 
     ExpressionNode getBody();
 

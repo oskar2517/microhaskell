@@ -6,7 +6,7 @@ import java.util.Map;
 public class SymbolTable {
 
     private final SymbolTable parent;
-    private final Map<String, Entry> functions = new HashMap<>();
+    private final Map<String, Entry> bindings = new HashMap<>();
     private final Map<String, FixityEntry> fixities = new HashMap<>();
 
     public SymbolTable(SymbolTable parent) {
@@ -41,42 +41,42 @@ public class SymbolTable {
         return new FixityEntry(FixityEntry.Associativity.LEFT, 9);
     }
 
-    public void enterFunction(String name, Entry entry) {
-        enterFunction(name, entry, () -> {});
+    public void enterBinding(String name, Entry entry) {
+        enterBinding(name, entry, () -> {});
     }
 
-    public void enterFunction(String name, Entry entry, Runnable error) {
+    public void enterBinding(String name, Entry entry, Runnable error) {
         if (name.equals("_")) return;
 
-        if (functions.containsKey(name)) {
+        if (bindings.containsKey(name)) {
             error.run();
         }
 
-        functions.put(name, entry);
+        bindings.put(name, entry);
     }
 
-    public void removeFunction(String name) {
-        if (functions.containsKey(name)) {
-            functions.remove(name);
+    public void removeBinding(String name) {
+        if (bindings.containsKey(name)) {
+            bindings.remove(name);
         } else if (parent != null) {
-            parent.removeFunction(name);
+            parent.removeBinding(name);
         }
     }
 
-    public Entry lookupFunction(String name) {
-        if (functions.containsKey(name)) {
-            return functions.get(name);
+    public Entry lookupBinding(String name) {
+        if (bindings.containsKey(name)) {
+            return bindings.get(name);
         }
 
         if (parent != null) {
-            return parent.lookupFunction(name);
+            return parent.lookupBinding(name);
         }
 
         return null;
     }
 
-    public Entry lookupFunction(String name, Runnable error) {
-        var entry = lookupFunction(name);
+    public Entry lookupBinding(String name, Runnable error) {
+        var entry = lookupBinding(name);
 
         if (entry == null) {
             error.run();
@@ -85,8 +85,8 @@ public class SymbolTable {
         return entry;
     }
 
-    public boolean isFunctionDefined(String name) {
-        return lookupFunction(name) != null;
+    public boolean isBindingDefined(String name) {
+        return lookupBinding(name) != null;
     }
 
     @Override
@@ -95,7 +95,7 @@ public class SymbolTable {
 
         sb.append("SymbolTable:%n".formatted());
 
-        for (var e : functions.entrySet()) {
+        for (var e : bindings.entrySet()) {
             sb.append("%s -> %s%n".formatted(e.getKey(), e.getValue()));
         }
 

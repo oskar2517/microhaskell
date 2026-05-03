@@ -6,14 +6,14 @@ import me.oskar.microhaskell.table.SymbolTable;
 
 import java.util.List;
 
-public class AnonymousFunctionNode extends ExpressionNode implements FunctionNode {
+public class LambdaNode extends ExpressionNode implements ParameterizedNode {
 
     private final List<AtomicExpressionNode> parameters;
     private final ExpressionNode body;
     @Node.NoProperty
     private SymbolTable localTable;
 
-    public AnonymousFunctionNode(Span span, List<AtomicExpressionNode> parameters, ExpressionNode body) {
+    public LambdaNode(Span span, List<AtomicExpressionNode> parameters, ExpressionNode body) {
         super(span);
 
         this.parameters = parameters;

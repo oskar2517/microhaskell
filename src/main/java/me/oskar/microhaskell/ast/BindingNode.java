@@ -5,7 +5,7 @@ import me.oskar.microhaskell.position.Span;
 
 import java.util.List;
 
-public class BindingNode extends Node implements FunctionNode {
+public class BindingNode extends Node implements ParameterizedNode {
 
     private final String name;
     private final List<AtomicExpressionNode> parameters;

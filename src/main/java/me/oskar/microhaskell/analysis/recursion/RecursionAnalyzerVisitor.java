@@ -2,7 +2,7 @@ package me.oskar.microhaskell.analysis.recursion;
 
 import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.ast.visitor.BaseVisitor;
-import me.oskar.microhaskell.table.FunctionEntry;
+import me.oskar.microhaskell.table.BindingEntry;
 import me.oskar.microhaskell.table.SymbolTable;
 
 import java.util.*;
@@ -10,8 +10,8 @@ import java.util.*;
 public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
     private final SymbolTable symbolTable;
-    private final Map<FunctionEntry, Set<FunctionEntry>> applicationGraph;
-    private final Set<FunctionEntry> currentApplications;
+    private final Map<BindingEntry, Set<BindingEntry>> applicationGraph;
+    private final Set<BindingEntry> currentApplications;
 
     public RecursionAnalyzerVisitor(SymbolTable symbolTable) {
         this(symbolTable, new HashMap<>(), null);
@@ -19,8 +19,8 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
     private RecursionAnalyzerVisitor(
             SymbolTable symbolTable,
-            Map<FunctionEntry, Set<FunctionEntry>> applicationGraph,
-            Set<FunctionEntry> currentApplications) {
+            Map<BindingEntry, Set<BindingEntry>> applicationGraph,
+            Set<BindingEntry> currentApplications) {
         this.symbolTable = symbolTable;
         this.applicationGraph = applicationGraph;
         this.currentApplications = currentApplications;
@@ -39,14 +39,14 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
 
     @Override
     public Void visit(BindingNode bindingNode) {
-        var entry = (FunctionEntry) symbolTable.lookupFunction(bindingNode.getName());
+        var entry = (BindingEntry) symbolTable.lookupBinding(bindingNode.getName());
 
-        var functionApplications = new HashSet<FunctionEntry>();
-        var localAnalyzer = new RecursionAnalyzerVisitor(entry.getLocalTable(), applicationGraph, functionApplications);
+        var bindingApplications = new HashSet<BindingEntry>();
+        var localAnalyzer = new RecursionAnalyzerVisitor(entry.getLocalTable(), applicationGraph, bindingApplications);
 
         bindingNode.getBody().accept(localAnalyzer);
-        if (applicationGraph.put(entry, functionApplications) != null) {
-            throw new IllegalStateException("Duplicated function in application graph");
+        if (applicationGraph.put(entry, bindingApplications) != null) {
+            throw new IllegalStateException("Duplicate binding in application graph");
         }
 
         return null;
@@ -83,16 +83,16 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
     }
 
     @Override
-    public Void visit(AnonymousFunctionNode anonymousFunctionNode) {
-        if (anonymousFunctionNode.getLocalTable() != symbolTable) {
-            var localAnalyzer = new RecursionAnalyzerVisitor(anonymousFunctionNode.getLocalTable(), applicationGraph,
+    public Void visit(LambdaNode lambdaNode) {
+        if (lambdaNode.getLocalTable() != symbolTable) {
+            var localAnalyzer = new RecursionAnalyzerVisitor(lambdaNode.getLocalTable(), applicationGraph,
                     currentApplications);
-            anonymousFunctionNode.accept(localAnalyzer);
+            lambdaNode.accept(localAnalyzer);
 
             return null;
         }
 
-        anonymousFunctionNode.getBody().accept(this);
+        lambdaNode.getBody().accept(this);
 
         return null;
     }
@@ -110,8 +110,8 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
     public Void visit(IdentifierNode identifierNode) {
         if (currentApplications == null) return null; // Top-level or untracked context
 
-        var entry = symbolTable.lookupFunction(identifierNode.getName());
-        if (entry instanceof FunctionEntry fe) {
+        var entry = symbolTable.lookupBinding(identifierNode.getName());
+        if (entry instanceof BindingEntry fe) {
             currentApplications.add(fe);
         }
 
@@ -132,14 +132,14 @@ public class RecursionAnalyzerVisitor extends BaseVisitor<Void> {
         var sccs = tarjan.findSCCs();
 
         for (var scc : sccs) {
-            for (var fn : scc) {
-                if (fn.getOwnerTable() != symbolTable) continue;
+            for (var binding : scc) {
+                if (binding.getOwnerTable() != symbolTable) continue;
 
                 if (scc.size() > 1) {
-                    fn.setAppliedMutuallyRecursively(true);
+                    binding.setAppliedMutuallyRecursively(true);
                 }
-                if (applicationGraph.getOrDefault(fn, Set.of()).contains(fn)) {
-                    fn.setAppliedSelfRecursively(true);
+                if (applicationGraph.getOrDefault(binding, Set.of()).contains(binding)) {
+                    binding.setAppliedSelfRecursively(true);
                 }
             }
         }

@@ -2,7 +2,7 @@ package me.oskar.microhaskell.table;
 
 import me.oskar.microhaskell.ast.BindingNode;
 
-public class FunctionEntry implements Entry {
+public class BindingEntry implements Entry {
 
     private static int dispatchIdCounter = 0;
 
@@ -14,7 +14,7 @@ public class FunctionEntry implements Entry {
     private final SymbolTable localTable;
     private final int dispatchId;
 
-    public FunctionEntry(SymbolTable ownerTable, SymbolTable localTable) {
+    public BindingEntry(SymbolTable ownerTable, SymbolTable localTable) {
         this.ownerTable = ownerTable;
         this.localTable = localTable;
 
@@ -59,7 +59,7 @@ public class FunctionEntry implements Entry {
 
     @Override
     public String toString() {
-        return "(Function dispatchId=%s, appliedRecursively=%s, appliedMutuallyRecursively=%s)"
+        return "(Binding dispatchId=%s, appliedRecursively=%s, appliedMutuallyRecursively=%s)"
                 .formatted(dispatchId, appliedSelfRecursively, appliedMutuallyRecursively);
     }
 }

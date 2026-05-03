@@ -20,16 +20,16 @@ public class Error {
         return new UnexpectedTokenError(code, filename, token, expected);
     }
 
-    public InvalidFunctionNodeError invalidFunctionName(Token token) {
-        return new InvalidFunctionNodeError(code, filename, token);
+    public InvalidBindingNameError invalidBindingName(Token token) {
+        return new InvalidBindingNameError(code, filename, token);
     }
 
-    public InvalidOperatorPrecedenceError invalidOperatorPrecedence(Token token) {
-        return new InvalidOperatorPrecedenceError(code, filename, token);
+    public InvalidFixityPrecedenceError invalidFixityPrecedence(Token token) {
+        return new InvalidFixityPrecedenceError(code, filename, token);
     }
 
-    public FixitySignatureLacksBindingError fixitySignatureLacksBinding(FixityNode fixityNode) {
-        return new FixitySignatureLacksBindingError(code, filename, fixityNode);
+    public FixityDeclarationLacksBindingError fixityDeclarationLacksBinding(FixityNode fixityNode) {
+        return new FixityDeclarationLacksBindingError(code, filename, fixityNode);
     }
 
     public UseOfUndefinedSymbolError useOfUndefinedSymbol(IdentifierNode identifierNode) {
@@ -44,11 +44,11 @@ public class Error {
         return new RedefinitionAsBindingError(code, filename, identifierNode);
     }
 
-    public DuplicatedFixityDeclarationError duplicatedFixityDeclaration(FixityNode fixityNode) {
-        return new DuplicatedFixityDeclarationError(code, filename, fixityNode);
+    public DuplicateFixityDeclarationError duplicateFixityDeclaration(FixityNode fixityNode) {
+        return new DuplicateFixityDeclarationError(code, filename, fixityNode);
     }
 
-    public MainFunctionMissingError mainFunctionMissing() {
-        return new MainFunctionMissingError(code, filename);
+    public MainBindingMissingError mainBindingMissing() {
+        return new MainBindingMissingError(code, filename);
     }
 }

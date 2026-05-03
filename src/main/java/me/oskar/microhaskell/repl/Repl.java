@@ -5,7 +5,7 @@ import me.oskar.microhaskell.ast.BindingNode;
 import me.oskar.microhaskell.ast.ProgramNode;
 import me.oskar.microhaskell.error.CompileTimeError;
 import me.oskar.microhaskell.error.Error;
-import me.oskar.microhaskell.error.MainFunctionMissingError;
+import me.oskar.microhaskell.error.MainBindingMissingError;
 import me.oskar.microhaskell.evaluation.Builtins;
 import me.oskar.microhaskell.evaluation.expression.Expression;
 import me.oskar.microhaskell.ir.IrGeneratorVisitor;
@@ -108,21 +108,21 @@ public class Repl {
             var ir = program.accept(irGenerator);
 
             return ir.evaluate(env);
-        } catch (MainFunctionMissingError e) {
+        } catch (MainBindingMissingError e) {
             return null;
         } catch (CompileTimeError e) {
             e.printError();
             return null;
         } finally {
-            var mainFunction = program.getDeclarations().stream().filter(d -> {
+            var mainBinding = program.getDeclarations().stream().filter(d -> {
                 if (d instanceof BindingNode b) {
                     return b.getName().equals("main");
                 }
 
                 return false;
             }).findFirst();
-            mainFunction.ifPresent(node -> program.getDeclarations().remove(node));
-            symbolTable.removeFunction("main");
+            mainBinding.ifPresent(node -> program.getDeclarations().remove(node));
+            symbolTable.removeBinding("main");
         }
     }
 

@@ -1,7 +1,7 @@
 package me.oskar.microhaskell.ast.visitor;
 
 import me.oskar.microhaskell.ast.*;
-import me.oskar.microhaskell.table.FunctionEntry;
+import me.oskar.microhaskell.table.BindingEntry;
 import me.oskar.microhaskell.table.SymbolTable;
 
 import java.util.ArrayList;
@@ -17,22 +17,22 @@ public abstract class AstRewriterVisitor implements Visitor<Node> {
     abstract protected AstRewriterVisitor createInstance(SymbolTable localTable);
 
     @Override
-    public Node visit(AnonymousFunctionNode anonymousFunctionNode) {
-        if (symbolTable != anonymousFunctionNode.getLocalTable()) {
-            var localRewriter = createInstance(anonymousFunctionNode.getLocalTable());
-            return anonymousFunctionNode.accept(localRewriter);
+    public Node visit(LambdaNode lambdaNode) {
+        if (symbolTable != lambdaNode.getLocalTable()) {
+            var localRewriter = createInstance(lambdaNode.getLocalTable());
+            return lambdaNode.accept(localRewriter);
         }
 
         var parameters = new ArrayList<AtomicExpressionNode>();
 
-        for (var p : anonymousFunctionNode.getParameters()) {
+        for (var p : lambdaNode.getParameters()) {
             parameters.add((AtomicExpressionNode) p.accept(this));
         }
 
-        var body = (ExpressionNode) anonymousFunctionNode.getBody().accept(this);
+        var body = (ExpressionNode) lambdaNode.getBody().accept(this);
 
-        var node = new AnonymousFunctionNode(anonymousFunctionNode.getSpan(), parameters, body);
-        node.setLocalTable(anonymousFunctionNode.getLocalTable());
+        var node = new LambdaNode(lambdaNode.getSpan(), parameters, body);
+        node.setLocalTable(lambdaNode.getLocalTable());
 
         return node;
     }
@@ -67,7 +67,7 @@ public abstract class AstRewriterVisitor implements Visitor<Node> {
 
     @Override
     public Node visit(BindingNode bindingNode) {
-        var entry = (FunctionEntry) symbolTable.lookupFunction(bindingNode.getName());
+        var entry = (BindingEntry) symbolTable.lookupBinding(bindingNode.getName());
 
         if (symbolTable != entry.getLocalTable()) {
             var localRewriter = createInstance(entry.getLocalTable());

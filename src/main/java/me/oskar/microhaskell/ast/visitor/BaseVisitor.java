@@ -5,7 +5,7 @@ import me.oskar.microhaskell.ast.*;
 public abstract class BaseVisitor<T> implements Visitor<T> {
 
     @Override
-    public T visit(AnonymousFunctionNode anonymousFunctionNode) {
+    public T visit(LambdaNode lambdaNode) {
         return null;
     }
 

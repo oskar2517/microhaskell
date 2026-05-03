@@ -4,7 +4,7 @@ import me.oskar.microhaskell.ast.*;
 import me.oskar.microhaskell.ast.visitor.BaseVisitor;
 import me.oskar.microhaskell.error.Error;
 import me.oskar.microhaskell.evaluation.expression.*;
-import me.oskar.microhaskell.table.FunctionEntry;
+import me.oskar.microhaskell.table.BindingEntry;
 import me.oskar.microhaskell.table.SymbolTable;
 
 import java.util.HashMap;
@@ -52,10 +52,10 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
         this.error = error;
     }
 
-    private Expression generateFunctionBody(FunctionNode function, IrGeneratorVisitor visitor) {
-        var body = function.getBody().accept(visitor);
+    private Expression generateLambdaBody(ParameterizedNode node, IrGeneratorVisitor visitor) {
+        var body = node.getBody().accept(visitor);
 
-        for (var p : function.getParameters().reversed()) {
+        for (var p : node.getParameters().reversed()) {
             body = new Lambda(((IdentifierNode) p).getName(), body);
         }
 
@@ -63,15 +63,15 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
     }
 
     @Override
-    public Expression visit(AnonymousFunctionNode anonymousFunctionNode) {
-        if (symbolTable != anonymousFunctionNode.getLocalTable()) {
-            var localIrGeneratorVisitor = new IrGeneratorVisitor(anonymousFunctionNode.getLocalTable(), recursionTargets,
+    public Expression visit(LambdaNode lambdaNode) {
+        if (symbolTable != lambdaNode.getLocalTable()) {
+            var localIrGeneratorVisitor = new IrGeneratorVisitor(lambdaNode.getLocalTable(), recursionTargets,
                     dispatchedLambdaBodies, error);
 
-            return anonymousFunctionNode.accept(localIrGeneratorVisitor);
+            return lambdaNode.accept(localIrGeneratorVisitor);
         }
 
-        return generateFunctionBody(anonymousFunctionNode, this);
+        return generateLambdaBody(lambdaNode, this);
     }
 
     @Override
@@ -84,7 +84,7 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
 
     @Override
     public Expression visit(BindingNode bindingNode) {
-        var entry = (FunctionEntry) symbolTable.lookupFunction(bindingNode.getName());
+        var entry = (BindingEntry) symbolTable.lookupBinding(bindingNode.getName());
 
         var localRecursionTargets = recursionTargets;
         if (entry.isAppliedSelfRecursively() || entry.isAppliedMutuallyRecursively()) {
@@ -95,7 +95,7 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
         var localIrGeneratorVisitor = new IrGeneratorVisitor(entry.getLocalTable(), localRecursionTargets,
                 dispatchedLambdaBodies, error);
 
-        var body = generateFunctionBody(bindingNode, localIrGeneratorVisitor);
+        var body = generateLambdaBody(bindingNode, localIrGeneratorVisitor);
 
         if (entry.isAppliedMutuallyRecursively()) {
             dispatchedLambdaBodies.put(entry.getDispatchId(), body);
@@ -113,9 +113,9 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
 
     @Override
     public Expression visit(IdentifierNode identifierNode) {
-        var entry = symbolTable.lookupFunction(identifierNode.getName());
+        var entry = symbolTable.lookupBinding(identifierNode.getName());
 
-        if (!(entry instanceof FunctionEntry fe)) return new Variable(identifierNode.getName());
+        if (!(entry instanceof BindingEntry fe)) return new Variable(identifierNode.getName());
 
         if (!recursionTargets.contains(identifierNode.getName())) return fe.getNode().accept(this);
 
@@ -156,7 +156,7 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
         for (var d : declarations) {
             if (!(d instanceof BindingNode b)) continue;
 
-            var entry = (FunctionEntry) letNode.getLocalTable().lookupFunction(b.getName());
+            var entry = (BindingEntry) letNode.getLocalTable().lookupBinding(b.getName());
             entry.setNode(b);
         }
 
@@ -176,8 +176,8 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
 
     @Override
     public Expression visit(ListLiteralNode listLiteralNode) {
-        var nilEntry = (FunctionEntry) symbolTable.lookupFunction("nil");
-        var consEntry = (FunctionEntry) symbolTable.lookupFunction("cons");
+        var nilEntry = (BindingEntry) symbolTable.lookupBinding("nil");
+        var consEntry = (BindingEntry) symbolTable.lookupBinding("cons");
 
         var previous = nilEntry.getNode().accept(this);
         for (var v : listLiteralNode.getValue().reversed()) {
@@ -193,7 +193,7 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
         for (var d : programNode.getDeclarations()) {
             if (!(d instanceof BindingNode b)) continue;
 
-            var entry = (FunctionEntry) symbolTable.lookupFunction(b.getName());
+            var entry = (BindingEntry) symbolTable.lookupBinding(b.getName());
             entry.setNode(b);
         }
 
@@ -203,7 +203,7 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
                 .findFirst();
 
         if (main.isEmpty()) {
-            throw error.mainFunctionMissing();
+            throw error.mainBindingMissing();
         }
 
         var body = main.get().accept(this);
