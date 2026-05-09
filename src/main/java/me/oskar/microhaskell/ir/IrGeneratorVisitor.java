@@ -36,19 +36,22 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
     private final SymbolTable symbolTable;
     private final Set<String> recursionTargets;
     private final Map<Integer, Expression> dispatchedLambdaBodies;
+    private final Map<BindingEntry, BindingNode> bindings;
     private final Error error;
 
     public IrGeneratorVisitor(SymbolTable symbolTable, Error error) {
-        this(symbolTable, new HashSet<>(), new HashMap<>(), error);
+        this(symbolTable, new HashSet<>(), new HashMap<>(), new HashMap<>(), error);
     }
 
     public IrGeneratorVisitor(SymbolTable symbolTable,
                               Set<String> recursionTargets,
                               Map<Integer, Expression> dispatchedLambdaBodies,
+                              Map<BindingEntry, BindingNode> bindings,
                               Error error) {
         this.symbolTable = symbolTable;
         this.recursionTargets = recursionTargets;
         this.dispatchedLambdaBodies = dispatchedLambdaBodies;
+        this.bindings = bindings;
         this.error = error;
     }
 
@@ -66,7 +69,7 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
     public Expression visit(LambdaNode lambdaNode) {
         if (symbolTable != lambdaNode.getLocalTable()) {
             var localIrGeneratorVisitor = new IrGeneratorVisitor(lambdaNode.getLocalTable(), recursionTargets,
-                    dispatchedLambdaBodies, error);
+                    dispatchedLambdaBodies, bindings, error);
 
             return lambdaNode.accept(localIrGeneratorVisitor);
         }
@@ -93,7 +96,7 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
         }
 
         var localIrGeneratorVisitor = new IrGeneratorVisitor(entry.getLocalTable(), localRecursionTargets,
-                dispatchedLambdaBodies, error);
+                dispatchedLambdaBodies, bindings, error);
 
         var body = generateLambdaBody(bindingNode, localIrGeneratorVisitor);
 
@@ -117,7 +120,7 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
 
         if (!(entry instanceof BindingEntry fe)) return new Variable(identifierNode.getName());
 
-        if (!recursionTargets.contains(identifierNode.getName())) return fe.getNode().accept(this);
+        if (!recursionTargets.contains(identifierNode.getName())) return bindings.get(fe).accept(this);
 
         if (fe.isAppliedMutuallyRecursively()) {
             return new Application(
@@ -146,7 +149,7 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
     public Expression visit(LetNode letNode) {
         if (symbolTable != letNode.getLocalTable()) {
             var localIrGeneratorVisitor = new IrGeneratorVisitor(letNode.getLocalTable(), recursionTargets,
-                    dispatchedLambdaBodies, error);
+                    dispatchedLambdaBodies, bindings, error);
 
             return letNode.accept(localIrGeneratorVisitor);
         }
@@ -157,7 +160,7 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
             if (!(d instanceof BindingNode b)) continue;
 
             var entry = (BindingEntry) letNode.getLocalTable().lookupBinding(b.getName());
-            entry.setNode(b);
+            bindings.put(entry, b);
         }
 
         var body = letNode.getExpression().accept(this);
@@ -176,12 +179,12 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
 
     @Override
     public Expression visit(ListLiteralNode listLiteralNode) {
-        var nilEntry = (BindingEntry) symbolTable.lookupBinding("nil");
-        var consEntry = (BindingEntry) symbolTable.lookupBinding("cons");
+        var nilBinding = bindings.get((BindingEntry) symbolTable.lookupBinding("nil"));
+        var consBinding = bindings.get((BindingEntry) symbolTable.lookupBinding("cons"));
 
-        var previous = nilEntry.getNode().accept(this);
+        var previous = nilBinding.accept(this);
         for (var v : listLiteralNode.getValue().reversed()) {
-            var appliedValue = new Application(consEntry.getNode().accept(this), v.accept(this));
+            var appliedValue = new Application(consBinding.accept(this), v.accept(this));
             previous = new Application(appliedValue, previous);
         }
 
@@ -194,7 +197,7 @@ public class IrGeneratorVisitor extends BaseVisitor<Expression> {
             if (!(d instanceof BindingNode b)) continue;
 
             var entry = (BindingEntry) symbolTable.lookupBinding(b.getName());
-            entry.setNode(b);
+            bindings.put(entry, b);
         }
 
         var main = programNode.getDeclarations().stream()

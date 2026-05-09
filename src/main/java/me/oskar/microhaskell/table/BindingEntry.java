@@ -1,14 +1,11 @@
 package me.oskar.microhaskell.table;
 
-import me.oskar.microhaskell.ast.BindingNode;
-
 public class BindingEntry implements Entry {
 
     private static int dispatchIdCounter = 0;
 
     private boolean appliedSelfRecursively = false;
     private boolean appliedMutuallyRecursively = false;
-    private BindingNode node;
 
     private final SymbolTable ownerTable;
     private final SymbolTable localTable;
@@ -47,14 +44,6 @@ public class BindingEntry implements Entry {
 
     public void setAppliedMutuallyRecursively(boolean appliedMutuallyRecursively) {
         this.appliedMutuallyRecursively = appliedMutuallyRecursively;
-    }
-
-    public BindingNode getNode() {
-        return node;
-    }
-
-    public void setNode(BindingNode node) {
-        this.node = node;
     }
 
     @Override
